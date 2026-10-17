@@ -15,17 +15,17 @@ export function hash(n) {
 export const easeOut = (t) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
 
 /** GitHub layout: columns are weeks (Sunday-start), rows are weekdays, centered on the origin. */
-export function gridLayout(days) {
+export function gridLayout(days, cell = CELL) {
   const offset = new Date(days[0].date + 'T00:00:00Z').getUTCDay();
   const cells = days.map((day, i) => ({ i, day, col: Math.floor((i + offset) / 7), row: (i + offset) % 7 }));
   const cols = cells[cells.length - 1].col + 1;
-  const x0 = (-cols * CELL) / 2 + CELL / 2;
-  const z0 = (-7 * CELL) / 2 + CELL / 2;
+  const x0 = (-cols * cell) / 2 + cell / 2;
+  const z0 = (-7 * cell) / 2 + cell / 2;
   for (const c of cells) {
-    c.x = x0 + c.col * CELL;
-    c.z = z0 + c.row * CELL;
+    c.x = x0 + c.col * cell;
+    c.z = z0 + c.row * cell;
   }
-  return { cells, cols, x0, z0, width: cols * CELL, depth: 7 * CELL };
+  return { cells, cols, x0, z0, cell, width: cols * cell, depth: 7 * cell };
 }
 
 export const maxCount = (days) => Math.max(1, ...days.map((d) => d.count));
@@ -92,7 +92,7 @@ export function glowTex() {
 
 /** Month + weekday labels and the "user · year" title on a grid board. */
 export function addGridLabels(board, renderer, layout, opts, theme, { bar = 0.82, labelColor, titleColor } = {}) {
-  const { cells, x0, z0 } = layout;
+  const { cells, x0, z0, cell } = layout;
   if (opts.labels) {
     let lastMonth = -1;
     for (const c of cells) {
@@ -100,13 +100,13 @@ export function addGridLabels(board, renderer, layout, opts, theme, { bar = 0.82
       if (m !== lastMonth && c.row === 0) {
         lastMonth = m;
         const t = textPlane(renderer, MONTHS[m], { size: 0.9, align: 'left', color: labelColor ?? theme.label });
-        t.position.set(c.x - bar / 2, 0.01, z0 - CELL * 1.2);
+        t.position.set(c.x - bar / 2, 0.01, z0 - cell / 2 - 0.7);
         board.add(t);
       }
     }
     [['Mon', 1], ['Wed', 3], ['Fri', 5]].forEach(([name, row]) => {
       const t = textPlane(renderer, name, { size: 0.7, align: 'right', color: labelColor ?? theme.label });
-      t.position.set(x0 - CELL * 0.8, 0.01, z0 + row * CELL);
+      t.position.set(x0 - cell / 2 - 0.3, 0.01, z0 + row * cell);
       board.add(t);
     });
   }
@@ -118,7 +118,7 @@ export function addGridLabels(board, renderer, layout, opts, theme, { bar = 0.82
       weight: 600,
       align: 'left',
     });
-    t.position.set(x0 - bar / 2, 0.01, z0 + 7 * CELL + 1.0);
+    t.position.set(x0 - bar / 2, 0.01, z0 + 6.5 * cell + 1.5);
     board.add(t);
   }
 }
