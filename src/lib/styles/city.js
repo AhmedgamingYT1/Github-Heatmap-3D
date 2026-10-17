@@ -34,6 +34,11 @@ export function createCity(ctx) {
   cells.forEach((c, i) => bars.setColorAt(i, levelColors[c.day.level]));
   board.add(bars);
 
+  // scratch objects for the bar matrices (declared before the first writeAll below)
+  const tmpMatrix = new THREE.Matrix4();
+  const tmpPos = new THREE.Vector3();
+  const tmpQuat = new THREE.Quaternion();
+  const tmpScale = new THREE.Vector3();
   let target = new Float32Array(cells.length);
   let current = new Float32Array(cells.length);
   let animStart = performance.now();
@@ -58,10 +63,6 @@ export function createCity(ctx) {
     });
   }
 
-  const tmpMatrix = new THREE.Matrix4();
-  const tmpPos = new THREE.Vector3();
-  const tmpQuat = new THREE.Quaternion();
-  const tmpScale = new THREE.Vector3();
   function setBarMatrix(i) {
     const c = cells[i];
     tmpPos.set(c.x, 0, c.z);
