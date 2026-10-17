@@ -32,7 +32,7 @@ function update(patch) {
   if ('theme' in patch) state.theme = getTheme(state.theme);
   if ('style' in patch) state.style = getStyle(state.style);
   map.setOptions(patch);
-  if ('theme' in patch || 'style' in patch) applyPageTheme();
+  if ('theme' in patch || 'style' in patch || 'palette' in patch) applyPageTheme();
   syncInputs();
   syncUrl();
   renderCode();
@@ -52,14 +52,12 @@ function applyPageTheme() {
   const style = STYLES[state.style];
   const theme = THEMES[style.theme || state.theme];
   applyThemeToPage(theme);
-  $('themes').hidden = Boolean(style.theme); // Pro styles bring their own colors
+  renderSwatches(style);
   $('exportStl').disabled = !style.stl;
   $('exportStl').title = style.stl ? '' : 'STL export is available for the City styles';
   for (const b of $('styles').children) b.setAttribute('aria-checked', b.dataset.style === state.style);
-  $('legend').replaceChildren(
-    ...theme.levels.map((c) => Object.assign(document.createElement('i'), { style: `background:${c}` })),
-  );
-  for (const b of $('themes').children) b.setAttribute('aria-pressed', b.dataset.theme === state.theme);
+  const levels = style.palettes ? (style.palettes[state.palette] ?? Object.values(style.palettes)[0]).levels : theme.levels;
+  $('legend').replaceChildren(...levels.map((c) => Object.assign(document.createElement('i'), { style: `background:${c}` })));
 }
 
 for (const [id, st] of Object.entries(STYLES)) {
@@ -72,17 +70,27 @@ for (const [id, st] of Object.entries(STYLES)) {
   $('styles').appendChild(b);
 }
 
-for (const [id, t] of Object.entries(THEMES)) {
-  if (t.hidden) continue;
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.dataset.theme = id;
-  b.title = t.name;
-  b.setAttribute('aria-label', t.name);
-  b.style.setProperty('--a', t.background);
-  b.style.setProperty('--b', t.levels[3]);
-  b.addEventListener('click', () => update({ theme: id }));
-  $('themes').appendChild(b);
+// Color swatches: the City's themes, or the style's own palettes (e.g. Forest seasons).
+function renderSwatches(style) {
+  const box = $('themes');
+  box.replaceChildren();
+  box.hidden = Boolean(style.theme) && !style.palettes;
+  const entries = style.palettes
+    ? Object.entries(style.palettes).map(([id, p]) => [id, p.name, p.levels[0], p.levels[3], { palette: id }, state.palette])
+    : Object.entries(THEMES)
+        .filter(([, t]) => !t.hidden)
+        .map(([id, t]) => [id, t.name, t.background, t.levels[3], { theme: id }, state.theme]);
+  for (const [id, name, a, b, patch, current] of entries) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.title = name;
+    btn.setAttribute('aria-label', name);
+    btn.setAttribute('aria-pressed', id === current);
+    btn.style.setProperty('--a', a);
+    btn.style.setProperty('--b', b);
+    btn.addEventListener('click', () => update(patch));
+    box.appendChild(btn);
+  }
 }
 
 // ---------- option inputs (data-opt="name") ----------
@@ -120,6 +128,8 @@ map.on('loading', ({ user, year }) => {
   setStatus(user ? `Loading ${user}'s ${year} contributions…` : '');
 });
 map.on('error', (err) => setStatus(err.message, true));
+map.on('building', () => setStatus('Growing your forest…'));
+map.on('built', () => setStatus('Drag to rotate · scroll to zoom · right-drag to pan'));
 map.on('load', ({ user, year, days }) => {
   setStatus(user ? 'Drag to rotate · scroll to zoom · right-drag to pan' : 'Showing sample data — enter a GitHub username.');
   const { total, best, longest } = computeStats(days);
