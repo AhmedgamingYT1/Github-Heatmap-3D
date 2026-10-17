@@ -5,6 +5,7 @@ const thisYear = new Date().getFullYear();
 
 export const OPTIONS = {
   user: { type: 'string', default: '' },
+  demo: { type: 'bool', default: false }, // show the built-in demo year instead of fetching `user`
   year: { type: 'number', default: thisYear, min: 2008, max: thisYear },
   style: { type: 'string', default: 'city' }, // city, night, galaxy, forest
   theme: { type: 'string', default: 'sand' }, // colors for the City style

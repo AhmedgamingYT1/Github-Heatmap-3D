@@ -11,7 +11,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { fetchContributions, sampleContributions } from './data.js';
+import { fetchContributions, sampleContributions, demoContributions } from './data.js';
 import { THEMES, getTheme } from './themes.js';
 import { defaults } from './options.js';
 import { STYLES, getStyle } from './styles/index.js';
@@ -292,7 +292,7 @@ export function createHeatmap(container, initialOptions = {}) {
     const { user, year } = opts;
     emit('loading', { user, year });
     try {
-      const data = user ? await fetchContributions(user, year) : sampleContributions(year);
+      const data = opts.demo ? demoContributions(year) : user ? await fetchContributions(user, year) : sampleContributions(year);
       if (token !== loadToken) return; // a newer load started meanwhile
       days = data;
       build(false);
