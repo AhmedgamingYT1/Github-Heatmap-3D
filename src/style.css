@@ -1,11 +1,14 @@
 :root {
-  --bg: #0d1117;
-  --panel: rgba(22, 27, 34, 0.82);
-  --border: #30363d;
-  --text: #e6edf3;
-  --muted: #8b949e;
-  --accent: #39d353;
-  --blue: #2f81f7;
+  /* defaults; overwritten at runtime by the active theme (see themes.js) */
+  --bg: #efe4cf;
+  --panel: rgba(255, 255, 255, 0.72);
+  --border: rgba(0, 0, 0, 0.12);
+  --text: #5b4a33;
+  --muted: #8a7656;
+  --accent: #c2703d;
+  --field: rgba(255, 255, 255, 0.9);
+  --button: rgba(0, 0, 0, 0.05);
+  --button-hover: rgba(0, 0, 0, 0.1);
 }
 
 * { box-sizing: border-box; }
@@ -43,21 +46,21 @@ form { display: flex; gap: 8px; flex-wrap: wrap; }
 input, select, button {
   font: inherit;
   color: var(--text);
-  background: #0d1117;
+  background: var(--field);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 6px 10px;
 }
-input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 #username { width: 180px; }
 
-button { cursor: pointer; background: #21262d; }
-button:hover { background: #30363d; }
-form button { background: #238636; border-color: #2ea043; }
-form button:hover { background: #2ea043; }
+button { cursor: pointer; background: var(--button); }
+button:hover { background: var(--button-hover); }
+form button { background: var(--accent); border-color: transparent; color: #fff; font-weight: 600; }
+form button:hover { background: var(--accent); filter: brightness(1.1); }
 
 #status { margin-top: 8px; color: var(--muted); font-size: 12px; min-height: 1em; }
-#status.error { color: #f85149; }
+#status.error { color: #e5484d; }
 
 .stats { top: 16px; right: 16px; min-width: 200px; }
 .stats .big { font-size: 28px; font-weight: 700; color: var(--accent); }
@@ -77,6 +80,16 @@ form button:hover { background: #2ea043; }
 .legend i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
 .legend i:first-of-type { margin-left: 4px; }
 .legend i:last-of-type { margin-right: 4px; }
+
+html, body { transition: background 0.3s; }
+
+.themes { display: flex; gap: 6px; }
+.themes button {
+  width: 22px; height: 22px; padding: 0; border-radius: 50%;
+  border: 2px solid var(--border);
+  background: conic-gradient(var(--a) 0 50%, var(--b) 0);
+}
+.themes button[aria-pressed="true"] { border-color: var(--text); transform: scale(1.12); }
 
 #tooltip {
   position: fixed;
