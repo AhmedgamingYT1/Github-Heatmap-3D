@@ -81,6 +81,52 @@ export const THEMES = {
     accent: '#ff9711',
     levels: ['#222222', '#631c03', '#bd561d', '#fa7a18', '#fddf68'],
   },
+
+  // Built-in looks of the Pro styles. Hidden from the theme picker.
+  night: {
+    name: 'Night City',
+    hidden: true,
+    dark: true,
+    background: '#070b1a',
+    plinth: '#10162a',
+    text: '#e8ecff',
+    label: '#7d89b3',
+    accent: '#ffd66b',
+    levels: ['#161d36', '#2e3f70', '#3a5190', '#4663ad', '#5677cc'],
+  },
+  galaxy: {
+    name: 'Galaxy',
+    hidden: true,
+    dark: true,
+    background: '#05030d',
+    plinth: '#140c2a',
+    text: '#efe9ff',
+    label: '#9a8fc4',
+    accent: '#b58cff',
+    levels: ['#4a4f7a', '#6c8cff', '#b58cff', '#ff8ad8', '#fff4d6'],
+  },
+  grove: {
+    name: 'Forest',
+    hidden: true,
+    dark: false,
+    background: '#dcebd6',
+    plinth: '#7a5534',
+    text: '#2f4227',
+    label: '#5d7352',
+    accent: '#4c7a34',
+    levels: ['#9cbf7a', '#7fb069', '#5c9a3a', '#3f7d2a', '#2d5f1f'],
+  },
+  monitor: {
+    name: 'Heartbeat',
+    hidden: true,
+    dark: true,
+    background: '#03120b',
+    plinth: '#0a2a1a',
+    text: '#c8ffe0',
+    label: '#5fbf8a',
+    accent: '#39ff88',
+    levels: ['#0f3a24', '#1a6b3e', '#25a35c', '#30d977', '#9dffc4'],
+  },
 };
 
 export const DEFAULT_THEME = 'sand';

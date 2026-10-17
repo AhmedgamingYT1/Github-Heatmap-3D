@@ -6,7 +6,9 @@ const thisYear = new Date().getFullYear();
 export const OPTIONS = {
   user: { type: 'string', default: '' },
   year: { type: 'number', default: thisYear, min: 2008, max: thisYear },
-  theme: { type: 'string', default: 'sand' },
+  style: { type: 'string', default: 'city' }, // city, night, galaxy, forest, heartbeat
+  theme: { type: 'string', default: 'sand' }, // colors for the City style
+  music: { type: 'bool', default: false }, // show a "play your year" button on embeds
   height: { type: 'number', default: 8, min: 2, max: 20 }, // tallest bar, in grid cells
   log: { type: 'bool', default: false }, // log scale so quiet days stay visible
   barSize: { type: 'number', default: 0.82, min: 0.3, max: 1 }, // bar footprint (1 = no gap)
