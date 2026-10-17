@@ -4,7 +4,7 @@
 //   bloom:  glow post-processing, for styles with lights in them
 import { createCity } from './city.js';
 import { createGalaxy } from './galaxy.js';
-import { createForest } from './forest.js';
+import { createForest, FOREST_PALETTES } from './forest.js';
 import { createHeartbeat } from './heartbeat.js';
 
 export const STYLES = {
@@ -42,7 +42,8 @@ export const STYLES = {
     pro: true,
     theme: 'grove',
     create: createForest,
-    camera: { dir: [-42, 26, 40], dist: 58, halfWidth: 30 }, // diagonal, looking into the forest
+    palettes: FOREST_PALETTES, // leaf colors, picked like themes
+    camera: { dir: [-42, 22, 40], dist: 52, halfWidth: 26 }, // diagonal, looking into the forest
     lights: { hemi: ['#ffffff', '#86b85a', 1.5], sun: ['#fff1d6', 2.2], rim: ['#ffd36b', 0.4] },
   },
   heartbeat: {
