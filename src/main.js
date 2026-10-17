@@ -9,6 +9,7 @@ import { OPTIONS, parseOptions, toParams, cameraToAngles } from './lib/options.j
 import { STYLES, getStyle } from './lib/styles/index.js';
 import { composeSong, createSongPlayer, renderSongWav } from './lib/song.js';
 import { CHART_TYPES } from './lib/charts.js';
+import { createViewPad } from './lib/viewpad.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -28,8 +29,35 @@ if (!params.has('theme')) {
   } catch {}
 }
 
-const map = createHeatmap($('app'), state);
+// Phones: start closer (a portrait screen would show the whole board tiny) and keep forests light.
+const PHONE = matchMedia('(max-width: 640px)').matches;
+const HOW_TO = matchMedia('(pointer: coarse)').matches ? 'Drag to rotate · pinch to zoom' : 'Drag to rotate · scroll to zoom · right-drag to pan';
+const map = createHeatmap($('app'), { ...state, homeZoom: PHONE ? 1.7 : 1, maxFps: 60, ...(PHONE && { detail: 'low', shadowMapSize: 1024, maxPixelRatio: 1.5 }) });
 if (import.meta.env.DEV) window.__heatmap = map; // for debugging in the console
+
+// ---------- camera pad + preview ----------
+// Preview hides every panel so only the model is left; "Show controls" brings them back.
+const previewBtn = document.createElement('button');
+previewBtn.type = 'button';
+previewBtn.className = 'vp-preview';
+previewBtn.title = 'Preview: hide the controls';
+previewBtn.innerHTML =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span>Preview</span>';
+createViewPad(document.body, map, { extra: previewBtn, className: 'studio-pad' });
+function setPreview(on) {
+  document.body.classList.toggle('preview', on);
+  $('exitPreview').hidden = !on;
+  if (on) setDrawer(false);
+}
+previewBtn.addEventListener('click', () => setPreview(true));
+$('exitPreview').addEventListener('click', () => setPreview(false));
+
+// phones: the bottom sheet keeps styles and colors in view, the rest folds under "More"
+$('moreToggle').addEventListener('click', () => {
+  const open = !$('controls').classList.contains('open');
+  $('controls').classList.toggle('open', open);
+  $('moreToggle').setAttribute('aria-expanded', open);
+});
 
 function update(patch) {
   state = { ...state, ...patch };
@@ -60,6 +88,7 @@ function applyPageTheme() {
   $('exportStl').disabled = !style.stl;
   $('exportStl').title = style.stl ? '' : 'STL export is available for the City styles';
   for (const b of $('styles').children) b.setAttribute('aria-checked', b.dataset.style === state.style);
+  $('styles').querySelector('[aria-checked="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }); // the phone row scrolls
   const levels = style.palettes ? (style.palettes[state.palette] ?? Object.values(style.palettes)[0]).levels : theme.levels;
   $('legend').replaceChildren(...levels.map((c) => Object.assign(document.createElement('i'), { style: `background:${c}` })));
 }
@@ -133,9 +162,9 @@ map.on('loading', ({ user, year }) => {
 });
 map.on('error', (err) => setStatus(err.message, true));
 map.on('building', () => setStatus('Growing your forest…'));
-map.on('built', () => setStatus('Drag to rotate · scroll to zoom · right-drag to pan'));
+map.on('built', () => setStatus(HOW_TO));
 map.on('load', ({ user, year, days }) => {
-  setStatus(user ? 'Drag to rotate · scroll to zoom · right-drag to pan' : 'Showing sample data — enter a GitHub username.');
+  setStatus(user ? HOW_TO : 'Showing sample data — enter a GitHub username.');
   const { total, best, longest } = computeStats(days);
   $('stats').hidden = false;
   $('total').textContent = total.toLocaleString();
@@ -211,7 +240,7 @@ $('form').addEventListener('submit', (e) => {
 });
 
 // ---------- buttons ----------
-$('resetView').addEventListener('click', () => map.resetView());
+$('resetView').addEventListener('click', () => map.viewFrom('home'));
 $('exportStl').addEventListener('click', () => {
   const blob = map.exportSTL();
   if (!blob) return;
@@ -232,7 +261,11 @@ function setDrawer(open) {
 }
 $('openDrawer').addEventListener('click', () => setDrawer($('drawer').hidden));
 $('closeDrawer').addEventListener('click', () => setDrawer(false));
-addEventListener('keydown', (e) => e.key === 'Escape' && setDrawer(false));
+addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  setDrawer(false);
+  setPreview(false);
+});
 
 // ---------- embed code ----------
 let tab = 'website';

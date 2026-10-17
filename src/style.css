@@ -199,3 +199,66 @@ body.drawer-open .stats { display: none; }
   header.panel { right: 16px; width: auto; }
   .stats { display: none; } /* the header card already fills the top on phones */
 }
+
+/* ---------- camera pad + preview ---------- */
+body {
+  --vp-bg: var(--panel); --vp-line: var(--border); --vp-text: var(--text); --vp-muted: var(--muted);
+  --vp-hover: var(--button-hover); --vp-active-bg: var(--text); --vp-active-text: var(--bg);
+}
+.studio-pad { position: fixed; right: 16px; top: 50%; transform: translateY(-50%); }
+.vp .vp-preview { color: var(--accent); font-weight: 650; }
+body.preview .vp-preview { display: none; }
+body.drawer-open .studio-pad { opacity: 0; pointer-events: none; }
+.panel { transition: opacity 0.3s, visibility 0.3s; }
+body.preview .panel { opacity: 0; visibility: hidden; }
+.exit-preview {
+  position: fixed; z-index: 5; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; font-weight: 600;
+  background: var(--panel); border: 1px solid var(--border); color: var(--text);
+  backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18); animation: rise 0.35s var(--ease);
+}
+.exit-preview:hover { background: var(--panel); filter: brightness(1.04); }
+.exit-preview:active { transform: translateX(-50%) scale(0.97); }
+.exit-preview[hidden] { display: none; }
+.exit-preview svg { width: 16px; height: 16px; }
+@keyframes rise { from { opacity: 0; transform: translateX(-50%) translateY(10px); } }
+
+/* wide screens: the bottom bar shows everything in one row */
+.controls-row, .more { display: contents; }
+.more-toggle { display: none; }
+
+/* ---------- phones: compact header, a bottom sheet, the pad on the right ---------- */
+@media (max-width: 640px) {
+  header.panel { top: max(10px, env(safe-area-inset-top)); left: 10px; right: 10px; padding: 12px; border-radius: 18px; }
+  h1 { font-size: 15px; margin-bottom: 8px; }
+  input, select { min-height: 36px; padding: 6px 10px; }
+  form button { padding: 6px 14px; }
+  #status { margin-top: 6px; font-size: 11px; }
+  .player { margin-top: 10px; padding-top: 10px; gap: 10px; }
+  .play-btn { width: 38px; height: 38px; font-size: 13px; }
+  #songSeek { margin: 4px 0 0; }
+
+  .controls {
+    left: 10px; right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); transform: none; max-width: none;
+    display: grid; gap: 10px; padding: 10px; border-radius: 20px;
+  }
+  .controls .styles { display: flex; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
+  .controls .styles::-webkit-scrollbar { display: none; }
+  .styles button { flex: none; padding: 7px 11px; }
+  .controls-row { display: flex; align-items: center; gap: 8px; }
+  .controls .themes { flex: 1; min-width: 0; overflow-x: auto; padding: 4px 2px; scrollbar-width: none; }
+  .controls .themes button { flex: none; }
+  .more-toggle { display: inline-flex; gap: 4px; flex: none; padding: 7px 12px; font-size: 13px; }
+  .more-toggle span { transition: transform 0.25s var(--ease); }
+  .controls.open .more-toggle span { transform: rotate(180deg); }
+  .more { display: none; }
+  .controls.open .more {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px;
+    padding-top: 10px; border-top: 1px solid var(--border);
+  }
+  #openDrawer { width: 100%; justify-content: center; padding: 10px; }
+
+  .studio-pad { right: 10px; }
+  .drawer { top: 10px; right: 10px; bottom: 10px; left: 10px; width: auto; }
+}

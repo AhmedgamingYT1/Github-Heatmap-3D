@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Studio · GitHub Heatmap 3D</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="description" content="Turn your GitHub contribution graph into a 360° rotatable 3D model. Embed it on your website or GitHub README." />
@@ -38,17 +38,28 @@
       <div class="row"><span class="muted">Longest streak</span><span id="streak">–</span></div>
     </div>
 
-    <div class="panel controls">
+    <div class="panel controls" id="controls">
       <div class="styles" id="styles" role="radiogroup" aria-label="Style"></div>
-      <div class="themes" id="themes" role="group" aria-label="Theme"></div>
-      <label><input type="checkbox" data-opt="autoRotate" /> Auto-rotate</label>
-      <label><input type="checkbox" data-opt="log" /> Log scale</label>
-      <label class="slider">Height <input type="range" data-opt="height" min="2" max="20" /></label>
-      <button id="resetView" type="button">Reset view</button>
-      <button id="exportStl" type="button">Download STL</button>
-      <div class="legend">Less <span id="legend" style="display: contents"></span> More</div>
+      <div class="controls-row">
+        <div class="themes" id="themes" role="group" aria-label="Theme"></div>
+        <button type="button" id="moreToggle" class="more-toggle" aria-expanded="false" aria-controls="more">More <span aria-hidden="true">▾</span></button>
+      </div>
+      <div class="more" id="more">
+        <label><input type="checkbox" data-opt="autoRotate" /> Auto-rotate</label>
+        <label><input type="checkbox" data-opt="log" /> Log scale</label>
+        <label class="slider">Height <input type="range" data-opt="height" min="2" max="20" /></label>
+        <button id="resetView" type="button">Reset view</button>
+        <button id="exportStl" type="button">Download STL</button>
+        <div class="legend">Less <span id="legend" style="display: contents"></span> More</div>
+      </div>
       <button id="openDrawer" type="button" class="primary">Customize &amp; Embed</button>
     </div>
+
+    <!-- preview: every panel out of the way, just the model -->
+    <button type="button" class="exit-preview" id="exitPreview" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3"/></svg>
+      Show controls
+    </button>
 
     <aside class="panel drawer" id="drawer" hidden aria-label="Customize and embed">
       <div class="drawer-head">
