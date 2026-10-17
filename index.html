@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Heatmap 3D</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <header class="panel">
+      <h1>GitHub Heatmap <span>3D</span></h1>
+      <form id="form">
+        <input id="username" placeholder="GitHub username" autocomplete="off" spellcheck="false" />
+        <select id="year"></select>
+        <button type="submit">Load</button>
+      </form>
+      <div id="status"></div>
+    </header>
+
+    <div class="panel stats" id="stats" hidden>
+      <div class="big" id="total">0</div>
+      <div class="muted" id="totalLabel">contributions</div>
+      <div class="row"><span class="muted">Best day</span><span id="best">–</span></div>
+      <div class="row"><span class="muted">Longest streak</span><span id="streak">–</span></div>
+    </div>
+
+    <div class="panel controls">
+      <label><input type="checkbox" id="autorotate" checked /> Auto-rotate</label>
+      <label><input type="checkbox" id="logscale" /> Log scale</label>
+      <label class="slider">Height <input type="range" id="heightScale" min="2" max="20" value="8" /></label>
+      <button id="resetView" type="button">Reset view</button>
+      <button id="exportStl" type="button">Download STL</button>
+      <div class="legend">
+        Less
+        <i style="background: #161b22"></i><i style="background: #0e4429"></i><i style="background: #006d32"></i><i style="background: #26a641"></i><i style="background: #39d353"></i>
+        More
+      </div>
+    </div>
+
+    <div id="tooltip" hidden></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
