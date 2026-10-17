@@ -10,7 +10,7 @@ Every day is a bar whose height matches that day's contribution count.
 |---|---|
 | **City** | One bar per day, as tall as that day's contributions. 8 color themes. |
 | **Night City** (Pro) | A city block for every day, after dark: apartments, office blocks and glass towers with spires, as tall as the day's contributions, with lit window grids, street lamps, moving car lights and parks on empty days. |
-| **Galaxy** (Pro) | A spiral galaxy from January at the core to December at the rim. Every day is a star; the biggest days are planets. |
+| **Galaxy** (Pro) | A realistic four-armed spiral galaxy (≈90k particles, dust lanes, nebulae, twinkling starfield) from January at the core to December at the rim. Every day is a star colored like a real one, from red dwarf to blue giant; the twelve biggest days are planets (gas giants, rocky, ocean and ice worlds, the top three ringed). |
 | **Forest** (Pro) | An island with a realistic tree for every day: oak, ash, aspen and pine, as tall as the day's contributions, with bushes for quiet days. Four leaf palettes: Spring (greens with pink blossoms on the busiest days), Autumn, Sakura and Dream. |
 | **Heartbeat** (Pro) | A heart monitor sweeping through the year, one beat per day. |
 
