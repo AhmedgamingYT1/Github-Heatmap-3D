@@ -5,14 +5,15 @@ import '@fontsource-variable/geist-mono';
 import '@fontsource-variable/doto';
 import './landing.css';
 import { createHeatmap } from './lib/heatmap.js';
-import { fetchContributions, sampleContributions } from './lib/data.js';
+import { demoContributions } from './lib/data.js';
 import { THEMES } from './lib/themes.js';
 import { FOREST_PALETTES } from './lib/styles/forest.js';
 import { composeSong, createSongPlayer } from './lib/song.js';
 import { renderChartSvg } from './lib/charts.js';
 
-// The profile shown across the landing page. Any public GitHub username works.
-const HERO_USER = 'torvalds';
+// The landing page shows a built-in demo year (every month filled), labelled as yours.
+const HERO_USER = 'you';
+const DEMO = { user: HERO_USER, demo: true };
 const YEAR = new Date().getFullYear();
 const $ = (id) => document.getElementById(id);
 
@@ -33,7 +34,7 @@ function heroOptions(style) {
     log: style === 'forest',
   };
 }
-const daysPromise = fetchContributions(HERO_USER, YEAR).catch(() => sampleContributions(YEAR));
+const daysPromise = Promise.resolve(demoContributions(YEAR));
 
 // Vertical swipes scroll the page on phones; horizontal drags still spin the model.
 const allowPageScroll = (el) => el.querySelectorAll('canvas').forEach((c) => (c.style.touchAction = 'pan-y'));
@@ -46,9 +47,9 @@ function studioUrl(params) {
 
 // ---------- hero ----------
 let heroStyle = 'night';
-$('heroWho').textContent = `@${HERO_USER}…`;
+$('heroWho').textContent = 'your year…';
 const hero = createHeatmap($('heroStage'), {
-  user: HERO_USER,
+  ...DEMO,
   year: YEAR,
   theme: 'sand',
   ...heroOptions(heroStyle),
@@ -127,7 +128,7 @@ function openViewer(key) {
   $('viewerHint').hidden = false;
   viewer.showModal();
   if (!viewerMap) {
-    viewerMap = createHeatmap($('viewerStage'), { user: HERO_USER, year: YEAR, rotateSpeed: 0.6, maxPixelRatio: 1.5, ...w.opts });
+    viewerMap = createHeatmap($('viewerStage'), { ...DEMO, year: YEAR, rotateSpeed: 0.6, maxPixelRatio: 1.5, ...w.opts });
     viewerMap.on('load', () => ($('viewerHint').hidden = true));
     viewerMap.on('built', () => ($('viewerHint').hidden = true));
     viewerMap.on('building', () => {
@@ -157,7 +158,7 @@ const BAR_DAYS = 5; // each bar of the little waveform is five days
 daysPromise.then((days) => {
   const song = composeSong(days, HERO_USER);
   $('songTitle').textContent = `“${song.title}”`;
-  $('songMeta').textContent = `@${HERO_USER}'s ${YEAR} · ${song.key} · ${song.bpm} bpm. Press to play.`;
+  $('songMeta').textContent = `A demo ${YEAR} · ${song.key} · ${song.bpm} bpm. Press to play.`;
   const max = Math.max(1, ...days.map((d) => d.count));
   for (let k = 0; k < days.length; k += BAR_DAYS) {
     const peak = Math.max(...days.slice(k, k + BAR_DAYS).map((d) => d.count));
