@@ -4,6 +4,20 @@ Turn any GitHub contribution graph into an interactive, 360° rotatable 3D model
 
 Every day is a bar whose height matches that day's contribution count.
 
+## Styles
+
+| Style | What it shows |
+|---|---|
+| **City** | One bar per day, as tall as that day's contributions. 8 color themes. |
+| **Night City** (Pro) | The city after dark: lit windows, rooftop lights and stars. |
+| **Galaxy** (Pro) | A spiral galaxy from January at the core to December at the rim. Every day is a star; the biggest days are planets. |
+| **Forest** (Pro) | A floating island where each day grows a plant: sprouts for quiet days, big trees (some in bloom) for big ones. |
+| **Heartbeat** (Pro) | A heart monitor sweeping through the year, one beat per day. |
+
+## Your year as a song (Pro)
+
+Every profile gets its own song, composed from its contributions. The key, scale and chords come from the username, the tempo from how much was shipped, and every day is one note: busy days play melody and drums, quiet stretches drift into soft pads. Play it on the site while the 3D view follows along, or download it as a WAV file.
+
 ## Features
 
 - Any public GitHub user, any year from 2008
@@ -53,7 +67,8 @@ The same names work as URL params (`?autoRotate=0`), script attributes (`data-au
 |---|---|---|
 | `user` | – | GitHub username (sample data when empty) |
 | `year` | current year | 2008 to now |
-| `theme` | `sand` | `sand`, `ocean`, `github`, `github-light`, `sunset`, `forest`, `neon`, `halloween` |
+| `style` | `city` | `city`, `night`, `galaxy`, `forest`, `heartbeat` |
+| `theme` | `sand` | City colors: `sand`, `ocean`, `github`, `github-light`, `sunset`, `forest`, `neon`, `halloween` |
 | `height` | `8` | Height of the tallest bar (2–20) |
 | `log` | `0` | Log scale, so quiet days stay visible next to busy ones |
 | `barSize` | `0.82` | Bar footprint, 0.3–1 (1 = no gaps) |
@@ -69,6 +84,7 @@ The same names work as URL params (`?autoRotate=0`), script attributes (`data-au
 | `tooltip` | `1` | Show date and count on hover |
 | `camera` | – | Starting camera position `x,y,z` (set by **Save this view**) |
 | `badge` | `1` | Small "Open in 3D" link on embeds |
+| `music` | `0` | "Play your year" song button on embeds |
 | `angle` | `-20` | Image only: view angle around the board, in degrees |
 | `tilt` | `30` | Image only: view angle above the board, 5–85 degrees |
 
@@ -93,6 +109,8 @@ embed.html, src/embed.js    bare 3D view for iframes
 public/embed.js             script-tag loader (creates the iframe)
 api/heatmap.js              README image endpoint (SVG)
 src/lib/heatmap.js          the 3D component: createHeatmap(element, options)
+src/lib/styles/             City / Night City, Galaxy, Forest, Heartbeat
+src/lib/song.js             song composer, player and WAV export
 src/lib/svg.js              3D-style SVG renderer for images
 src/lib/options.js          every option, its default and URL format
 src/lib/themes.js           color themes
