@@ -352,9 +352,15 @@ export function createHeatmap(container, initialOptions = {}) {
     get days() {
       return days;
     },
-    /** For debugging: the three.js scene. */
+    /** For debugging: the three.js scene, camera and the current style instance. */
     get scene() {
       return scene;
+    },
+    get camera() {
+      return camera;
+    },
+    get style() {
+      return style;
     },
     /** Change any options; reloads data only when user/year change. */
     setOptions(patch) {

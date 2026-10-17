@@ -442,14 +442,15 @@ export function createGalaxy(ctx) {
     pick(ray) {
       const planetHit = ray.intersectObjects(planets, false)[0];
       if (planetHit) return planetHit.object.userData.day;
-      // nearest day star within a small distance of the ray
+      // nearest day star within ~15px of the pointer (tolerance grows with distance)
       let best = -1;
-      let bestD = 0.5;
+      let bestD = 1;
       const v = new THREE.Vector3();
       for (let i = 0; i < days.length; i++) {
         if (planetSet.has(i) || !finalSize[i]) continue;
         v.copy(spot[i]).applyMatrix4(group.matrixWorld);
-        const d = ray.ray.distanceToPoint(v) / Math.max(0.6, finalSize[i] * 0.5);
+        const reach = ray.ray.origin.distanceTo(v) * 0.012 + finalSize[i] * 0.15;
+        const d = ray.ray.distanceToPoint(v) / reach;
         if (d < bestD) {
           bestD = d;
           best = i;
