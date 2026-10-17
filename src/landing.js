@@ -12,6 +12,7 @@ import { composeSong, createSongPlayer } from './lib/song.js';
 import { renderChartSvg } from './lib/charts.js';
 import { renderSvg } from './lib/svg.js';
 import { createViewPad } from './lib/viewpad.js';
+import { suggestDesktop } from './lib/desktop-hint.js';
 import { defaults } from './lib/options.js';
 
 // The landing page shows a built-in demo year (every month filled), labelled as yours.
@@ -286,6 +287,21 @@ $('tryForm').addEventListener('submit', (e) => {
   location.href = studioUrl(heroStudioParams());
 });
 
+// ---------- build: the username box ----------
+let buildStyle = 'city';
+$('buildWorlds').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-style]');
+  if (!b) return;
+  buildStyle = b.dataset.style;
+  for (const x of $('buildWorlds').querySelectorAll('button')) x.setAttribute('aria-checked', x === b);
+});
+$('buildForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const user = $('buildUser').value.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?github\.com\//, '').split('/')[0];
+  if (!user) return $('buildUser').focus();
+  location.href = `/studio.html?${new URLSearchParams({ user, style: buildStyle })}`;
+});
+
 // ---------- explore: expanding cards open a live viewer ----------
 const WORLDS = {
   night: { title: 'Night City', kicker: 'Pro · 3D', opts: { style: 'night' } },
@@ -323,7 +339,7 @@ viewer.addEventListener('click', (e) => e.target === viewer && viewer.close()); 
 // (closing hides the stage, so the viewer's 3D stops rendering on its own)
 
 $('expand').addEventListener('click', (e) => {
-  const card = e.target.closest('.xcard');
+  const card = e.target.closest('[data-open]');
   if (!card) return;
   if (card.dataset.open === 'song') toggleSong();
   else openViewer(card.dataset.open);
@@ -447,3 +463,5 @@ for (const b of document.querySelectorAll('[data-checkout]')) {
     $('checkoutNote').textContent = 'Checkout isn’t open yet. Payments are coming next; until then everything is free in the Studio.';
   });
 }
+
+suggestDesktop();

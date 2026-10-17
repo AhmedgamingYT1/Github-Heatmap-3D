@@ -10,6 +10,7 @@ import { STYLES, getStyle } from './lib/styles/index.js';
 import { composeSong, createSongPlayer, renderSongWav } from './lib/song.js';
 import { CHART_TYPES } from './lib/charts.js';
 import { createViewPad } from './lib/viewpad.js';
+import { suggestDesktop } from './lib/desktop-hint.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -346,3 +347,4 @@ $('copy').addEventListener('click', async () => {
 applyPageTheme();
 syncInputs();
 syncUrl();
+suggestDesktop();

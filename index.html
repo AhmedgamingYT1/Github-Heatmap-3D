@@ -24,6 +24,7 @@
     <nav class="nav" aria-label="Main">
       <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>Heatmap 3D</a>
       <div class="nav-links">
+        <a href="#build">Build</a>
         <a href="#explore">Explore</a>
         <a href="#features">Features</a>
         <a href="#pricing">Pricing</a>
@@ -40,7 +41,7 @@
     <!-- ===== Hero: one screen, the product in the middle ===== -->
     <header class="hero" id="top">
       <div class="hero-copy">
-        <span class="badge"><i class="pulse" aria-hidden="true"></i>4 worlds · 1 song · free to start</span>
+        <span class="badge"><svg class="gh-mark" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>Made from your GitHub graph<span class="badge-extra"><i class="badge-sep" aria-hidden="true"></i>free to start</span></span>
         <h1>Your year of code, <span class="dots">in 3D.</span></h1>
         <p class="sub">Every contribution becomes a building, a star or a tree. Spin it, play it, put it anywhere.</p>
       </div>
@@ -67,7 +68,7 @@
       <div class="hero-bar">
         <form class="try" id="tryForm">
           <label for="tryUser" class="sr-only">GitHub username</label>
-          <span class="try-prefix">github.com/</span>
+          <span class="try-prefix"><svg class="gh-mark" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>github.com/</span>
           <input id="tryUser" placeholder="username" autocomplete="off" spellcheck="false" autocapitalize="off" />
           <button type="submit" class="pill-btn">Build mine <kbd>↵</kbd></button>
         </form>
@@ -81,52 +82,86 @@
       </div>
     </header>
 
-    <!-- ===== Explore: expanding cards ===== -->
+    <!-- ===== Build: the username box, with room for more platforms ===== -->
+    <section class="section build" id="build">
+      <div class="section-head">
+        <span class="kicker">01 · Build yours</span>
+        <h2>Bring your year.</h2>
+        <p class="sub">Your public contributions, nothing to install and no sign-in. Pick where your year lives.</p>
+      </div>
+      <div class="bezel build-box">
+        <div class="bezel-in build-in">
+          <div class="platforms" role="radiogroup" aria-label="Platform">
+            <button type="button" role="radio" aria-checked="true" class="platform"><svg class="gh-mark" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>GitHub</button>
+            <button type="button" role="radio" aria-checked="false" class="platform" disabled>GitLab<small>soon</small></button>
+            <button type="button" role="radio" aria-checked="false" class="platform" disabled>LeetCode<small>soon</small></button>
+            <button type="button" role="radio" aria-checked="false" class="platform" disabled>Codeforces<small>soon</small></button>
+          </div>
+          <form class="build-form" id="buildForm">
+            <label for="buildUser" class="sr-only">GitHub username</label>
+            <span class="build-prefix"><svg class="gh-mark" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>github.com/</span>
+            <input id="buildUser" placeholder="your-username" autocomplete="off" spellcheck="false" autocapitalize="off" />
+            <button type="submit" class="pill-btn pill-btn-accent">Build my year <span aria-hidden="true">→</span></button>
+          </form>
+          <div class="build-worlds" id="buildWorlds" role="radiogroup" aria-label="Open it as">
+            <span class="build-label">Open it as</span>
+            <button type="button" role="radio" data-style="city" aria-checked="true">City<small class="free">Free</small></button>
+            <button type="button" role="radio" data-style="night" aria-checked="false">Night City<small>Pro</small></button>
+            <button type="button" role="radio" data-style="galaxy" aria-checked="false">Galaxy<small>Pro</small></button>
+            <button type="button" role="radio" data-style="forest" aria-checked="false">Forest<small>Pro</small></button>
+          </div>
+          <p class="build-note">Public profiles only. Private contributions count if you turn on “Include private contributions” on GitHub.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Explore: the free world up front, the Pro worlds beside it ===== -->
     <section class="section" id="explore">
       <div class="section-head">
-        <span class="kicker">01 · Explore</span>
+        <span class="kicker">02 · Explore</span>
         <h2>Pick a world for your year.</h2>
-        <p class="sub">Hover to look closer. Open any of them live, then make it yours in the Studio.</p>
+        <p class="sub">Start free with the City. Pro opens three more worlds and your song. Open any of them live.</p>
       </div>
-      <div class="expand" id="expand">
-        <button type="button" class="xcard" data-open="night" style="--img: url(/previews/night.jpg)">
-          <span class="xcard-tag">Pro</span>
-          <span class="xcard-body"><b>Night City</b><span>Glass towers for your best days, lit windows and traffic for the rest.</span></span>
-          <span class="xcard-go" aria-hidden="true">↗</span>
+      <div class="worlds" id="expand">
+        <button type="button" class="world world-free" data-open="city" style="--img: url(/previews/city.jpg)">
+          <span class="world-tag free">Free forever</span>
+          <span class="world-body">
+            <b>City</b>
+            <span>The classic. One bar per day, in eight color themes. Embeds, README cards and STL included.</span>
+            <span class="world-cta">Open it live <i aria-hidden="true">↗</i></span>
+          </span>
         </button>
-        <button type="button" class="xcard" data-open="galaxy" style="--img: url(/previews/galaxy.jpg)">
-          <span class="xcard-tag">Pro</span>
-          <span class="xcard-body"><b>Galaxy</b><span>January at the core, December at the rim. Big days become planets.</span></span>
-          <span class="xcard-go" aria-hidden="true">↗</span>
-        </button>
-        <button type="button" class="xcard" data-open="forest" style="--img: url(/previews/forest.jpg)">
-          <span class="xcard-tag">Pro</span>
-          <span class="xcard-body"><b>Forest</b><span>A real tree for every day you shipped. Big days bloom.</span></span>
-          <span class="xcard-go" aria-hidden="true">↗</span>
-        </button>
-        <button type="button" class="xcard" data-open="sakura" style="--img: url(/previews/sakura.jpg)">
-          <span class="xcard-tag">Pro</span>
-          <span class="xcard-body"><b>Sakura</b><span>The forest in four seasons: Spring, Autumn, Sakura and Dream.</span></span>
-          <span class="xcard-go" aria-hidden="true">↗</span>
-        </button>
-        <button type="button" class="xcard" data-open="city" style="--img: url(/previews/city.jpg)">
-          <span class="xcard-tag free">Free</span>
-          <span class="xcard-body"><b>City</b><span>The classic. One bar per day in eight color themes.</span></span>
-          <span class="xcard-go" aria-hidden="true">↗</span>
-        </button>
-        <button type="button" class="xcard xcard-song" data-open="song" id="songCard">
-          <span class="xcard-wave" id="songWave" aria-hidden="true"></span>
-          <span class="xcard-tag">Pro</span>
-          <span class="xcard-body"><b id="songTitle">Your song</b><span id="songMeta">One note per day. Press to play.</span></span>
-          <span class="xcard-go" id="songIcon" aria-hidden="true">▶</span>
-        </button>
+        <div class="worlds-pro">
+          <div class="worlds-pro-head"><span class="pro-badge">PRO</span><span>Three more worlds and your song · from $2.42/mo</span></div>
+          <button type="button" class="world" data-open="night" style="--img: url(/previews/night.jpg)">
+            <span class="world-body"><b>Night City</b><span>Glass towers for big days, lit windows and traffic for the rest.</span></span>
+            <i class="world-go" aria-hidden="true">↗</i>
+          </button>
+          <button type="button" class="world" data-open="galaxy" style="--img: url(/previews/galaxy.jpg)">
+            <span class="world-body"><b>Galaxy</b><span>January at the core, December at the rim. Big days become planets.</span></span>
+            <i class="world-go" aria-hidden="true">↗</i>
+          </button>
+          <button type="button" class="world" data-open="forest" style="--img: url(/previews/forest.jpg)">
+            <span class="world-body"><b>Forest</b><span>A real tree for every day you shipped. Big days bloom.</span></span>
+            <i class="world-go" aria-hidden="true">↗</i>
+          </button>
+          <button type="button" class="world" data-open="sakura" style="--img: url(/previews/sakura.jpg)">
+            <span class="world-body"><b>Four seasons</b><span>The forest in Spring, Autumn, Sakura and Dream.</span></span>
+            <i class="world-go" aria-hidden="true">↗</i>
+          </button>
+          <button type="button" class="world world-song" data-open="song" id="songCard">
+            <span class="xcard-wave" id="songWave" aria-hidden="true"></span>
+            <span class="world-body"><b id="songTitle">Your song</b><span id="songMeta">One note per day. Press to play.</span></span>
+            <i class="world-go" id="songIcon" aria-hidden="true">▶</i>
+          </button>
+        </div>
       </div>
     </section>
 
     <!-- ===== Features: bento of bezel cards ===== -->
     <section class="section" id="features">
       <div class="section-head">
-        <span class="kicker">02 · Features</span>
+        <span class="kicker">03 · Features</span>
         <h2>Made to be shown off.</h2>
       </div>
       <div class="bento">
@@ -141,20 +176,20 @@
             <div><b data-count="12">0</b><span>themes and palettes</span></div>
           </div>
         </article>
+        <article class="bezel b-themes">
+          <div class="bezel-in swatches" id="swatches"></div>
+          <div class="bezel-cap"><b>Your colors</b><span>Eight themes. Tap one to recolor these cards.</span></div>
+        </article>
+        <article class="bezel b-donut">
+          <div class="bezel-in art" id="donutArt"></div>
+          <div class="bezel-cap"><b>Weekly rhythm</b><span>See which days you really ship.</span></div>
+        </article>
         <article class="bezel b-embed">
           <div class="bezel-in code">
             <div class="code-top"><span class="dots3" aria-hidden="true"><i></i><i></i><i></i></span><span>index.html</span><button type="button" class="copy" id="copyEmbed">Copy</button></div>
             <pre id="embedCode"></pre>
           </div>
           <div class="bezel-cap"><b>One line, any website</b><span>Fully interactive 3D in an iframe or a script tag.</span></div>
-        </article>
-        <article class="bezel b-donut">
-          <div class="bezel-in art" id="donutArt"></div>
-          <div class="bezel-cap"><b>Weekly rhythm</b><span>See which days you really ship.</span></div>
-        </article>
-        <article class="bezel b-themes">
-          <div class="bezel-in swatches" id="swatches"></div>
-          <div class="bezel-cap"><b>Your colors</b><span>Eight themes. Tap one to recolor these cards.</span></div>
         </article>
         <article class="bezel b-print">
           <div class="bezel-in print">
@@ -169,7 +204,7 @@
     <!-- ===== Pricing ===== -->
     <section class="section" id="pricing">
       <div class="section-head">
-        <span class="kicker">03 · Pricing</span>
+        <span class="kicker">04 · Pricing</span>
         <h2>Start free. Go Pro for the good stuff.</h2>
       </div>
       <div class="billing seg" id="billing" role="radiogroup" aria-label="Billing period">
