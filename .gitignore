@@ -1,3 +1,5 @@
 node_modules
 dist
 .preview*
+.vercel
+.vercel-auth
