@@ -167,7 +167,7 @@ export function createHeatmap(container, initialOptions = {}) {
   }
 
   function applyLiveOptions() {
-    controls.autoRotate = opts.autoRotate && !intro;
+    controls.autoRotate = opts.autoRotate && !camAnim;
     controls.autoRotateSpeed = opts.rotateSpeed;
     controls.enabled = opts.interactive;
     controls.enableZoom = Boolean(opts.zoom);
@@ -254,54 +254,96 @@ export function createHeatmap(container, initialOptions = {}) {
     return Math.max(base * 0.7, Math.min(180, halfWidth / Math.tan(hfov / 2)));
   }
 
+  // `homeZoom` > 1 starts closer than the fit-everything distance (the landing page's hero).
   function homePosition() {
     if (opts.camera) return new THREE.Vector3().fromArray(opts.camera);
-    return new THREE.Vector3().fromArray(styleDef.camera?.dir ?? [-18, 32, 52]).normalize().multiplyScalar(fitDistance());
+    const dist = fitDistance() / Math.max(0.2, opts.homeZoom ?? 1);
+    return new THREE.Vector3().fromArray(styleDef.camera?.dir ?? [-18, 32, 52]).normalize().multiplyScalar(dist);
   }
 
   function resetView() {
-    intro = null;
+    camAnim = null;
     camera.position.copy(homePosition());
     controls.target.set(0, 0, 0);
     controls.update();
   }
 
-  // The intro: the camera starts straight above the board (where it reads like the flat
-  // GitHub graph) and swings down to its usual angle while the style grows in again.
-  // `span` is the fraction of the view's width the board covers at the start.
-  let intro = null;
-  function playIntro({ duration = 1900, span = 0.83 } = {}) {
-    const boardWidth = styleDef.camera?.boardWidth ?? 53;
-    const hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect);
-    const from = new THREE.Spherical(Math.min(400, boardWidth / span / 2 / Math.tan(hfov / 2)), 0.02, 0);
-    const to = new THREE.Spherical().setFromVector3(homePosition());
-    intro = { start: performance.now(), duration, from, to };
-    controls.target.set(0, 0, 0);
-    camera.position.setFromSpherical(from);
+  // ---------- camera moves ----------
+  // One eased move of the camera around the board, in spherical coordinates, while the
+  // look-at point glides back to the center. Auto-rotation pauses during it and resumes
+  // from wherever it ends, so a chosen view keeps turning from there.
+  let camAnim = null;
+  const offsetNow = () => new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+  function moveCamera(to, { duration = 1000, from = offsetNow() } = {}) {
+    let turn = (to.theta - from.theta) % (Math.PI * 2); // the short way around
+    if (turn > Math.PI) turn -= Math.PI * 2;
+    if (turn < -Math.PI) turn += Math.PI * 2;
+    camAnim = {
+      start: performance.now(),
+      duration,
+      from,
+      to: new THREE.Spherical(to.radius, to.phi, from.theta + turn),
+      target: controls.target.clone(),
+    };
     controls.autoRotate = false;
-    style?.replay?.();
   }
-  function stepIntro(now) {
-    const t = Math.min(1, (now - intro.start) / intro.duration);
+  function stepCamera(now) {
+    const t = Math.min(1, (now - camAnim.start) / camAnim.duration);
     const e = t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2; // ease in-out
-    const { from, to } = intro;
+    const { from, to, target } = camAnim;
+    controls.target.lerpVectors(target, new THREE.Vector3(), e);
     camera.position.setFromSpherical(
       new THREE.Spherical(
         THREE.MathUtils.lerp(from.radius, to.radius, e),
         THREE.MathUtils.lerp(from.phi, to.phi, e),
         THREE.MathUtils.lerp(from.theta, to.theta, e),
       ),
-    );
+    ).add(controls.target);
     if (t >= 1) {
-      intro = null;
+      camAnim = null;
       controls.autoRotate = opts.autoRotate;
     }
   }
   controls.addEventListener('start', () => {
-    if (!intro) return;
-    intro = null; // the user grabbed the model: hand over the camera
+    if (!camAnim) return;
+    camAnim = null; // the user grabbed the model: hand over the camera
     controls.autoRotate = opts.autoRotate;
   });
+
+  // The intro: the camera starts straight above the board (where it reads like the flat
+  // GitHub graph) and swings down to its usual angle while the style grows in again.
+  // `span` is the fraction of the view's width the board covers at the start.
+  function playIntro({ duration = 1900, span = 0.83 } = {}) {
+    const boardWidth = styleDef.camera?.boardWidth ?? 53;
+    const hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect);
+    const from = new THREE.Spherical(Math.min(400, boardWidth / span / 2 / Math.tan(hfov / 2)), 0.02, 0);
+    controls.target.set(0, 0, 0);
+    camera.position.setFromSpherical(from);
+    moveCamera(new THREE.Spherical().setFromVector3(homePosition()), { duration, from });
+    style?.replay?.();
+  }
+
+  // Named views. The board's front is the side with the name on it (+z); `phi` is measured
+  // from straight above. The current zoom is kept.
+  const VIEWS = {
+    top: { phi: 0.02, theta: 0 },
+    front: { phi: 1.18, theta: 0 },
+    back: { phi: 1.18, theta: Math.PI },
+    left: { phi: 1.18, theta: -Math.PI / 2 },
+    right: { phi: 1.18, theta: Math.PI / 2 },
+  };
+  function viewFrom(name) {
+    const home = new THREE.Spherical().setFromVector3(homePosition());
+    const v = VIEWS[name];
+    if (!v) return moveCamera(home); // 'home': the default angle and distance
+    moveCamera(new THREE.Spherical(offsetNow().radius, v.phi, v.theta));
+  }
+  function zoomBy(factor) {
+    const now = offsetNow();
+    const base = camAnim ? camAnim.to : now; // repeated clicks add up
+    const r = THREE.MathUtils.clamp(base.radius * factor, controls.minDistance, controls.maxDistance);
+    moveCamera(new THREE.Spherical(r, base.phi, base.theta), { duration: 450, from: now });
+  }
 
   // ---------- sizing ----------
   function resize() {
@@ -391,7 +433,7 @@ export function createHeatmap(container, initialOptions = {}) {
     if (opts.maxFps && now - lastRender < 1000 / opts.maxFps - 4) return;
     lastRender = now;
     style?.update(now);
-    if (intro) stepIntro(now);
+    if (camAnim) stepCamera(now);
     controls.update();
     // fog only softens the far edge of the board, however far away the camera is
     const dist = camera.position.length();
@@ -461,6 +503,10 @@ export function createHeatmap(container, initialOptions = {}) {
     },
     /** Swing the camera down from straight above while the style grows in again. */
     intro: playIntro,
+    /** Glide to a named view ('top', 'front', 'back', 'left', 'right' or 'home') and keep turning from there. */
+    viewFrom,
+    /** Zoom in (factor < 1) or out (> 1), animated. */
+    zoomBy,
     /** Resolves when the current style has finished building. */
     ready: whenReady,
     /** Stop (or resume) rendering, e.g. while the view is covered. */
