@@ -2,10 +2,12 @@
 import { createHeatmap } from './lib/heatmap.js';
 import { THEMES, getTheme } from './lib/themes.js';
 import { OPTIONS, parseOptions, toParams } from './lib/options.js';
+import { STYLES, getStyle } from './lib/styles/index.js';
+import { composeSong, createSongPlayer } from './lib/song.js';
 
 const params = new URLSearchParams(location.search);
 const opts = parseOptions(params);
-const theme = THEMES[getTheme(opts.theme)];
+const theme = THEMES[STYLES[getStyle(opts.style)].theme || getTheme(opts.theme)];
 const $ = (id) => document.getElementById(id);
 
 if (!opts.transparent) document.body.style.background = theme.background;
@@ -13,7 +15,29 @@ $('message').style.color = theme.text;
 
 const map = createHeatmap($('map'), opts);
 map.on('loading', () => ($('message').textContent = 'Loading…'));
-map.on('load', () => ($('message').textContent = ''));
+map.on('load', ({ days, user }) => {
+  $('message').textContent = '';
+  if (opts.music) setupMusic(days, user);
+});
+
+// optional "play your year" button
+let player = null;
+function setupMusic(days, user) {
+  player?.destroy();
+  const song = composeSong(days, user);
+  const btn = $('music');
+  const label = () => `${player?.playing ? '❚❚' : '▶'}  ${song.title}`;
+  player = createSongPlayer(song, {
+    onStep: (i) => map.highlight(i),
+    onState: () => (btn.textContent = label()),
+    onEnd: () => map.highlight(-1),
+  });
+  btn.textContent = label();
+  btn.style.background = theme.accent;
+  btn.style.color = theme.dark ? theme.background : '#fff';
+  btn.hidden = false;
+  btn.onclick = () => (player.playing ? player.pause() : player.play());
+}
 map.on('error', (err) => ($('message').textContent = err.message));
 
 if (opts.badge) {
