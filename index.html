@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Heatmap 3D</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="description" content="Turn your GitHub contributions into a 3D city, a galaxy, a forest, a song and beautiful cards. Embed them on your website or README." />
+    <link rel="stylesheet" href="/src/landing.css" />
+  </head>
+  <body>
+    <nav class="nav" id="nav">
+      <a href="#top" class="brand"><img src="/favicon.svg" alt="" width="22" height="22" /> Heatmap 3D</a>
+      <div class="nav-links">
+        <a href="#styles">Styles</a>
+        <a href="#song">Song</a>
+        <a href="#designs">Designs</a>
+        <a href="#anywhere">Embed</a>
+        <a href="#pricing">Pricing</a>
+      </div>
+      <a href="/studio.html" class="btn btn-small">Open Studio</a>
+    </nav>
+
+    <!-- 1. Hero: the product, centered -->
+    <header class="hero" id="top">
+      <p class="eyebrow">For every GitHub profile</p>
+      <h1 class="display">Your year of code.<br /><span class="grad">Built in 3D.</span></h1>
+      <p class="lede">Every contribution becomes something you can spin, explore and share: a city, a galaxy, a forest, even a song.</p>
+      <form class="try" id="tryForm">
+        <label for="tryUser" class="sr-only">GitHub username</label>
+        <span class="at">github.com/</span>
+        <input id="tryUser" placeholder="your-username" autocomplete="off" spellcheck="false" required />
+        <button type="submit" class="btn">Build mine</button>
+      </form>
+      <div class="hero-stage" id="heroStage" aria-label="Interactive 3D contribution graph"></div>
+      <p class="hero-caption" id="heroCaption">Drag to spin it.</p>
+    </header>
+
+    <!-- 2. Styles: one 3D view that changes as you scroll -->
+    <section class="showcase" id="styles">
+      <div class="showcase-stage" id="showcaseStage">
+        <div class="showcase-canvas" id="showcaseCanvas"></div>
+        <div class="showcase-loading" id="showcaseLoading" hidden>Growing the forest…</div>
+      </div>
+      <div class="showcase-steps">
+        <article class="step" data-style="city">
+          <p class="eyebrow">City · Free</p>
+          <h2>Every day, a building.</h2>
+          <p>The classic. One bar per day, as tall as that day's contributions, in eight color themes from Sand to Neon.</p>
+        </article>
+        <article class="step" data-style="night">
+          <p class="eyebrow">Night City · Pro</p>
+          <h2>Your busiest weeks become a skyline.</h2>
+          <p>Glass towers for your best days, apartments for quiet ones. Lit windows, street lamps, and traffic that never stops.</p>
+        </article>
+        <article class="step" data-style="galaxy">
+          <p class="eyebrow">Galaxy · Pro</p>
+          <h2>A year, in orbit.</h2>
+          <p>January at the core, December at the rim. Every day is a star; your biggest days become planets, the top three with rings.</p>
+        </article>
+        <article class="step" data-style="forest">
+          <p class="eyebrow">Forest · Pro</p>
+          <h2>Watch your work grow.</h2>
+          <p>A real tree for every day you shipped. Big days grow tall and bloom. Four seasons of color: Spring, Autumn, Sakura and Dream.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 3. Song -->
+    <section class="song dark" id="song">
+      <p class="eyebrow">Your year as a song · Pro</p>
+      <h2 class="display-2">Every year has a sound.</h2>
+      <p class="lede">One note per day. Your username picks the key, your output sets the tempo. No two profiles sound alike.</p>
+      <div class="song-player">
+        <button type="button" class="play" id="songPlay" aria-label="Play the song">▶</button>
+        <div class="song-info">
+          <div class="song-title" id="songTitle">…</div>
+          <div class="song-meta" id="songMeta"></div>
+        </div>
+      </div>
+      <div class="wave" id="songWave" aria-hidden="true"></div>
+      <p class="song-day" id="songDay">&nbsp;</p>
+    </section>
+
+    <!-- 4. 2D designs -->
+    <section class="designs" id="designs">
+      <p class="eyebrow">Designs</p>
+      <h2 class="display-2">Prefer flat? Beautiful cards.</h2>
+      <p class="lede">The same year as clean 2D designs. Every one works as a GitHub README image and follows your theme.</p>
+      <div class="chips" id="designThemes" role="group" aria-label="Design theme"></div>
+      <div class="design-grid" id="designGrid"></div>
+    </section>
+
+    <!-- 5. Anywhere -->
+    <section class="anywhere" id="anywhere">
+      <p class="eyebrow">Put it anywhere</p>
+      <h2 class="display-2">One line. Anywhere you show your work.</h2>
+      <div class="three">
+        <div class="use">
+          <h3>Your website</h3>
+          <p>Fully interactive 3D, sized to fit. Paste one line of HTML.</p>
+          <pre><code>&lt;iframe src="…/embed.html?user=you&amp;style=galaxy"&gt;&lt;/iframe&gt;</code></pre>
+        </div>
+        <div class="use">
+          <h3>GitHub README</h3>
+          <p>A crisp image that updates every hour and links to the 3D version.</p>
+          <pre><code>![My year](…/api/heatmap?user=you&amp;type=card)</code></pre>
+        </div>
+        <div class="use">
+          <h3>Share and print</h3>
+          <p>A link to your exact view, the song as a WAV file, or an STL ready for a 3D printer.</p>
+          <pre><code>…/studio.html?user=you&amp;style=night</code></pre>
+        </div>
+      </div>
+      <a href="/studio.html" class="btn btn-large">Open the Studio</a>
+    </section>
+
+    <!-- 6. Pricing -->
+    <section class="pricing" id="pricing">
+      <p class="eyebrow">Pricing</p>
+      <h2 class="display-2">Start free. Go Pro for the good stuff.</h2>
+      <div class="plans">
+        <div class="plan">
+          <h3>Free</h3>
+          <div class="price">$0</div>
+          <ul>
+            <li>3D City in 8 themes</li>
+            <li>Stats card and Weekly rhythm</li>
+            <li>Website embed and README image</li>
+            <li>Current year</li>
+            <li>Small "made with" badge</li>
+          </ul>
+          <a href="/studio.html" class="btn btn-ghost">Start free</a>
+        </div>
+        <div class="plan featured">
+          <span class="ribbon">Most popular</span>
+          <h3>Pro</h3>
+          <div class="price">$4<small>/month</small></div>
+          <p class="sub">or $29 a year</p>
+          <ul>
+            <li>Night City, Galaxy and Forest</li>
+            <li>Your year as a song, with download</li>
+            <li>Every design and color palette</li>
+            <li>Any year and all-time boards</li>
+            <li>HD images and STL for 3D printing</li>
+            <li>No badge</li>
+          </ul>
+          <button type="button" class="btn" data-checkout="pro">Get Pro</button>
+        </div>
+        <div class="plan">
+          <h3>Lifetime</h3>
+          <div class="price">$49<small>once</small></div>
+          <p class="sub">Launch offer, limited</p>
+          <ul>
+            <li>Everything in Pro, forever</li>
+            <li>Every new style as it ships</li>
+            <li>Your name on the supporters wall</li>
+          </ul>
+          <button type="button" class="btn btn-ghost" data-checkout="lifetime">Get Lifetime</button>
+        </div>
+      </div>
+      <p class="checkout-note" id="checkoutNote" role="status"></p>
+    </section>
+
+    <!-- 7. FAQ -->
+    <section class="faq">
+      <h2 class="display-2">Questions</h2>
+      <details>
+        <summary>Where does the data come from?</summary>
+        <p>From your public GitHub contribution calendar, the same one on your profile. No sign-in is needed to try it.</p>
+      </details>
+      <details>
+        <summary>Are private contributions included?</summary>
+        <p>Only if you've turned on "Include private contributions" on your GitHub profile. Then they're counted, without any details.</p>
+      </details>
+      <details>
+        <summary>Will my README image stay up to date?</summary>
+        <p>Yes. It's redrawn from your latest contributions and refreshed about once an hour.</p>
+      </details>
+      <details>
+        <summary>How does Pro work with my embeds?</summary>
+        <p>Pro is linked to your GitHub username. Once you upgrade, every embed and README image for your profile unlocks automatically. There are no keys to paste.</p>
+      </details>
+    </section>
+
+    <footer class="footer">
+      <a href="#top" class="brand"><img src="/favicon.svg" alt="" width="20" height="20" /> Heatmap 3D</a>
+      <p>Made for people who ship. Trees by <a href="https://github.com/dgreenheck/ez-tree" rel="noopener">EZ-Tree</a>.</p>
+      <a href="https://github.com/vimalsri318/Github-Heatmap-3D" rel="noopener">GitHub</a>
+    </footer>
+
+    <script type="module" src="/src/landing.js"></script>
+  </body>
+</html>
