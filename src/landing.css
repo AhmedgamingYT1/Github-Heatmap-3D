@@ -181,7 +181,7 @@ kbd { font: 500 11px/1 var(--mono); padding: 3px 5px; border-radius: 5px; backgr
 }
 /* light mode + a night-time world: show it on a dark screen instead */
 .hero-view[data-card] .hero-stage {
-  inset: 6px max(var(--gutter), calc(50% - 620px)) 14px; border-radius: 28px; overflow: hidden;
+  inset: 6px var(--gutter) 14px; border-radius: 28px; overflow: hidden;
   -webkit-mask-image: none; mask-image: none; background: #070b1a;
   box-shadow: 0 30px 80px rgba(20, 20, 40, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
@@ -232,11 +232,26 @@ kbd { font: 500 11px/1 var(--mono); padding: 3px 5px; border-radius: 5px; backgr
 .gh.tiny .gh-months { font-size: 9px; }
 .gh.tiny .gh-head { font-size: 12px; }
 
-/* ---------- view toggle and color dock, floating over the view ---------- */
-.seg.view-toggle { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 2; }
-.view-toggle button { padding: 6px 14px; font: 600 12.5px/1 var(--mono); }
+/* ---------- camera pad (left) and color dock (right), floating over the view ---------- */
+.hero-view {
+  --side: max(var(--gutter), calc(50% - 700px));
+  --vp-bg: var(--glass); --vp-line: var(--line-2); --vp-text: var(--text); --vp-muted: var(--muted);
+  --vp-hover: var(--hover); --vp-active-bg: var(--btn-bg); --vp-active-text: var(--btn-fg);
+  margin-top: 10px;
+}
+.hero-pad { left: var(--side); top: 50%; transform: translateY(-50%); box-shadow: var(--shadow); }
+.vp-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 2px; border-radius: 12px; background: var(--hover); }
+.vp-mode button { justify-content: center; padding: 0; font-weight: 650; }
+.vp-mode button[aria-checked='true'] { background: var(--btn-bg); color: var(--btn-fg); }
+/* the flat graph has nothing to orbit: only the 2D / 3D switch stays */
+.hero-view[data-view='2d'] .hero-pad .vp-views { display: none; }
+/* night-time worlds on a light page sit on a dark card; keep it clear of the pad */
+@media (min-width: 761px) {
+  .hero-view[data-card] .hero-stage { left: max(calc(var(--gutter) + 96px), calc(50% - 600px)); right: max(calc(var(--gutter) + 20px), calc(50% - 600px)); }
+}
+.viewer-pad { left: 12px; top: 50%; transform: translateY(-50%); --vp-bg: rgba(20, 20, 24, 0.7); --vp-line: rgba(255, 255, 255, 0.12); --vp-text: #f4f4f6; --vp-muted: #b4b4bc; --vp-active-bg: #ededef; --vp-active-text: #0b0b0d; }
 .dock {
-  position: absolute; right: max(var(--gutter), calc(50% - 640px)); top: 50%; z-index: 2;
+  position: absolute; right: var(--side); top: 50%; z-index: 2;
   display: grid; justify-items: center; gap: 8px; padding: 10px 7px; border-radius: 999px;
   background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--line-2); box-shadow: var(--shadow);
@@ -351,6 +366,8 @@ kbd { font: 500 11px/1 var(--mono); padding: 3px 5px; border-radius: 5px; backgr
 .swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; padding: 18px; align-content: center; }
 .swatches button { width: auto; height: auto; aspect-ratio: 1; border-radius: 10px; border-color: var(--line); }
 .swatches button:hover { transform: scale(1.08) rotate(-3deg); }
+.swatches button[aria-checked='true'] { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--text); }
+.swatches { grid-template-columns: repeat(4, 1fr); }
 .print { display: grid; place-items: center; padding: 18px; background: radial-gradient(80% 80% at 50% 60%, rgba(242, 166, 94, 0.12), transparent); }
 .print-model { width: min(340px, 92%); transition: transform 0.6s cubic-bezier(.2, .8, .2, 1); }
 .print-model svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 14px 18px rgba(120, 60, 20, 0.25)); }
@@ -479,4 +496,7 @@ kbd { font: 500 11px/1 var(--mono); padding: 3px 5px; border-radius: 5px; backgr
   .dock-list { grid-auto-flow: column; gap: 6px; }
   .dock-list button { width: 22px; height: 22px; }
   .gh { padding: 10px 10px 9px; gap: 6px; }
+  .hero-view { --side: 10px; }
+  .hero-pad { top: 6px; transform: none; }
+  .vp-mode button { width: auto; }
 }

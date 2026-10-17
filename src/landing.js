@@ -11,6 +11,7 @@ import { FOREST_PALETTES } from './lib/styles/forest.js';
 import { composeSong, createSongPlayer } from './lib/song.js';
 import { renderChartSvg } from './lib/charts.js';
 import { renderSvg } from './lib/svg.js';
+import { createViewPad } from './lib/viewpad.js';
 import { defaults } from './lib/options.js';
 
 // The landing page shows a built-in demo year (every month filled), labelled as yours.
@@ -76,6 +77,7 @@ const hero = createHeatmap($('heroStage'), {
   year: YEAR,
   ...heroOptions(heroStyle),
   zoom: 'pinch', // pinch to zoom; a plain scroll still scrolls the page
+  homeZoom: MOBILE ? 2.2 : 1.45, // closer than fit-everything, so the detail reads
   rotateSpeed: 0.45,
   maxPixelRatio: 1.5,
   ...PERF,
@@ -142,6 +144,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function setView(v) {
   view.dataset.view = v;
   if (v === '3d') {
+    for (const b of view.querySelectorAll('.vp [data-on]')) b.removeAttribute('data-on'); // back to the default angle
     hero.setPaused(false);
     hero.intro({ span: sizeFlat() });
   } else {
@@ -180,10 +183,15 @@ seg.addEventListener('click', (e) => {
   if (b) selectStyle(b.dataset.style);
 });
 
-const toggle = $('viewToggle');
+// the camera pad on the left of the view, with the 2D / 3D switch at its top
+const toggle = document.createElement('div');
+toggle.className = 'vp-mode';
+toggle.setAttribute('role', 'radiogroup');
+toggle.setAttribute('aria-label', 'View');
+toggle.innerHTML = ['2d', '3d'].map((v) => `<button type="button" role="radio" data-view="${v}">${v.toUpperCase()}</button>`).join('');
+createViewPad(view, hero, { extra: toggle, className: 'hero-pad' });
 function syncToggle() {
   for (const x of toggle.querySelectorAll('button')) x.setAttribute('aria-checked', x.dataset.view === wanted);
-  moveGlider(toggle);
 }
 toggle.addEventListener('click', async (e) => {
   const b = e.target.closest('button[data-view]');
@@ -215,6 +223,9 @@ const CITY_COLORS = Object.entries(THEMES)
 const FOREST_COLORS = Object.entries(FOREST_PALETTES).map(([id, p]) => ({ id, name: `Forest ${p.name}`, a: p.levels[1], b: p.levels[4] }));
 const swatch = (c, on) =>
   `<button type="button" role="radio" data-color="${c.id}" aria-checked="${on}" aria-label="${c.name}" title="${c.name}" style="--a:${c.a};--b:${c.b}"></button>`;
+
+// the Features section's swatches: every City theme, page background against its strongest color
+$('swatches').innerHTML = CITY_COLORS.map((c) => swatch({ ...c, a: THEMES[c.id].background, b: THEMES[c.id].levels[3] }, false)).join('');
 
 function renderDock() {
   const list = heroStyle === 'city' ? CITY_COLORS : heroStyle === 'forest' ? FOREST_COLORS : null;
@@ -263,13 +274,9 @@ applyHero();
 flatColors();
 addEventListener('resize', () => {
   moveGlider();
-  moveGlider(toggle);
   sizeFlat();
 });
-document.fonts?.ready.then(() => {
-  moveGlider();
-  moveGlider(toggle);
-});
+document.fonts?.ready.then(() => moveGlider());
 moveGlider();
 syncToggle();
 present({ hold: 1400 }); // the first look: GitHub's graph, then it rises
@@ -299,6 +306,7 @@ function openViewer(key) {
   viewer.showModal();
   if (!viewerMap) {
     viewerMap = createHeatmap($('viewerStage'), { ...DEMO, year: YEAR, rotateSpeed: 0.6, maxPixelRatio: 1.5, ...PERF, ...phoneTuning(w.opts.style), ...w.opts });
+    createViewPad($('viewerStage'), viewerMap, { className: 'viewer-pad' });
     viewerMap.on('load', () => ($('viewerHint').hidden = true));
     viewerMap.on('built', () => ($('viewerHint').hidden = true));
     viewerMap.on('building', () => {
@@ -352,8 +360,11 @@ function toggleSong() {
 }
 
 // ---------- features ----------
+// The cards follow the page until a swatch in "Your colors" is picked.
+let featureTheme = null;
 function renderFeatureArt(days) {
-  const theme = isLight() ? 'sand' : 'halloween';
+  const theme = featureTheme ?? (isLight() ? 'sand' : 'halloween');
+  for (const b of $('swatches').children) b.setAttribute('aria-checked', b.dataset.color === theme);
   $('cardArt').innerHTML = renderChartSvg('card', days, { user: HERO_USER, theme });
   $('donutArt').innerHTML = renderChartSvg('donut', days, { user: HERO_USER, theme });
 }
@@ -379,17 +390,12 @@ $('copyEmbed').addEventListener('click', async () => {
   setTimeout(() => ($('copyEmbed').textContent = 'Copy'), 1400);
 });
 
-// the same swatches as the hero's dock: tap one to see it up there
-$('swatches').innerHTML = [
-  ...CITY_COLORS.map((c) => swatch({ ...c, id: `city:${c.id}` }, false)),
-  ...FOREST_COLORS.map((c) => swatch({ ...c, id: `forest:${c.id}` }, false)),
-].join('');
+// tap a theme to recolor the cards in this section
 $('swatches').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-color]');
   if (!b) return;
-  const [style, id] = b.dataset.color.split(':');
-  scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-  pickColor(style, id);
+  featureTheme = b.dataset.color;
+  daysPromise.then(renderFeatureArt);
 });
 
 // count numbers up when they scroll into view
