@@ -3,6 +3,8 @@ import { createHeatmap, fmtDate } from './lib/heatmap.js';
 import { computeStats } from './lib/data.js';
 import { THEMES, getTheme, applyThemeToPage } from './lib/themes.js';
 import { OPTIONS, parseOptions, toParams, cameraToAngles } from './lib/options.js';
+import { STYLES, getStyle } from './lib/styles/index.js';
+import { composeSong, createSongPlayer, renderSongWav } from './lib/song.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,12 +25,14 @@ if (!params.has('theme')) {
 }
 
 const map = createHeatmap($('app'), state);
+if (import.meta.env.DEV) window.__heatmap = map; // for debugging in the console
 
 function update(patch) {
   state = { ...state, ...patch };
   if ('theme' in patch) state.theme = getTheme(state.theme);
+  if ('style' in patch) state.style = getStyle(state.style);
   map.setOptions(patch);
-  if ('theme' in patch) applyPageTheme();
+  if ('theme' in patch || 'style' in patch) applyPageTheme();
   syncInputs();
   syncUrl();
   renderCode();
@@ -45,15 +49,31 @@ function syncUrl() {
 
 // ---------- page theme ----------
 function applyPageTheme() {
-  const theme = THEMES[state.theme];
+  const style = STYLES[state.style];
+  const theme = THEMES[style.theme || state.theme];
   applyThemeToPage(theme);
+  $('themes').hidden = Boolean(style.theme); // Pro styles bring their own colors
+  $('exportStl').disabled = !style.stl;
+  $('exportStl').title = style.stl ? '' : 'STL export is available for the City styles';
+  for (const b of $('styles').children) b.setAttribute('aria-checked', b.dataset.style === state.style);
   $('legend').replaceChildren(
     ...theme.levels.map((c) => Object.assign(document.createElement('i'), { style: `background:${c}` })),
   );
   for (const b of $('themes').children) b.setAttribute('aria-pressed', b.dataset.theme === state.theme);
 }
 
+for (const [id, st] of Object.entries(STYLES)) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.role = 'radio';
+  b.dataset.style = id;
+  b.innerHTML = st.pro ? `${st.name} <small>PRO</small>` : st.name;
+  b.addEventListener('click', () => update({ style: id }));
+  $('styles').appendChild(b);
+}
+
 for (const [id, t] of Object.entries(THEMES)) {
+  if (t.hidden) continue;
   const b = document.createElement('button');
   b.type = 'button';
   b.dataset.theme = id;
@@ -95,7 +115,10 @@ function setStatus(msg, isError = false) {
   $('status').classList.toggle('error', isError);
 }
 
-map.on('loading', ({ user, year }) => setStatus(user ? `Loading ${user}'s ${year} contributions…` : ''));
+map.on('loading', ({ user, year }) => {
+  player?.pause();
+  setStatus(user ? `Loading ${user}'s ${year} contributions…` : '');
+});
 map.on('error', (err) => setStatus(err.message, true));
 map.on('load', ({ user, year, days }) => {
   setStatus(user ? 'Drag to rotate · scroll to zoom · right-drag to pan' : 'Showing sample data — enter a GitHub username.');
@@ -105,6 +128,67 @@ map.on('load', ({ user, year, days }) => {
   $('totalLabel').textContent = `contributions in ${year}${user ? '' : ' (sample)'}`;
   $('best').textContent = best.count ? `${best.count} · ${fmtDate(best.date, { month: 'short', day: 'numeric' })}` : '–';
   $('streak').textContent = `${longest} day${longest === 1 ? '' : 's'}`;
+  setupSong(days, user);
+});
+
+// ---------- song ----------
+let player = null;
+const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+function setupSong(days, user) {
+  player?.destroy();
+  map.highlight(-1);
+  const song = composeSong(days, user);
+  $('player').hidden = false;
+  $('songTitle').textContent = `“${song.title}”`;
+  $('songMeta').textContent = `${song.artist} · ${song.key} · ${song.bpm} bpm · ${fmtTime(song.duration)}`;
+  $('songSeek').max = song.steps - 1;
+  $('songSeek').value = 0;
+  $('songTime').textContent = '0:00';
+  $('songDay').textContent = 'one note per day';
+  player = createSongPlayer(song, {
+    onStep(i) {
+      map.highlight(i);
+      $('songSeek').value = i;
+      $('songTime').textContent = fmtTime(i * song.stepDur);
+      const d = days[i];
+      $('songDay').textContent = `${fmtDate(d.date, { month: 'short', day: 'numeric' })} · ${d.count} contribution${d.count === 1 ? '' : 's'}`;
+    },
+    onState(playing) {
+      $('playSong').textContent = playing ? '❚❚' : '▶';
+      $('playSong').setAttribute('aria-label', playing ? 'Pause song' : 'Play your year as a song');
+    },
+    onEnd() {
+      map.highlight(-1);
+      $('songSeek').value = 0;
+    },
+  });
+}
+
+$('playSong').addEventListener('click', () => (player?.playing ? player.pause() : player?.play()));
+$('songSeek').addEventListener('input', (e) => {
+  player?.seek(Number(e.target.value));
+  map.highlight(Number(e.target.value));
+});
+$('downloadSong').addEventListener('click', async () => {
+  if (!player) return;
+  const btn = $('downloadSong');
+  btn.disabled = true;
+  btn.textContent = '…';
+  const label = $('songDay').textContent;
+  $('songDay').textContent = 'Rendering your song…';
+  try {
+    const blob = await renderSongWav(player.song);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${state.user || 'sample'}-${state.year}-song.wav`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⤓';
+    $('songDay').textContent = label;
+  }
 });
 
 $('form').addEventListener('submit', (e) => {
@@ -142,7 +226,7 @@ let tab = 'website';
 const TAB_HINTS = {
   website: 'Paste into any HTML page — fully interactive 3D.',
   script: 'Paste where the model should appear. Options are data-* attributes you can edit by hand.',
-  readme: 'GitHub READMEs only allow images, so this is a 3D-style picture of your saved view. Clicking it opens the interactive 3D version.',
+  readme: 'GitHub READMEs only allow images, so this is a 3D-style picture of your saved view (City style). Clicking it opens the interactive version.',
   link: 'A direct link to this exact view.',
 };
 

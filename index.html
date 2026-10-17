@@ -19,6 +19,16 @@
         <button type="submit">Load</button>
       </form>
       <div id="status"></div>
+      <div class="player" id="player" hidden>
+        <button type="button" id="playSong" class="play-btn" aria-label="Play your year as a song">▶</button>
+        <div class="song-info">
+          <div class="song-title"><span id="songTitle">Your song</span> <span class="pro-tag">PRO</span></div>
+          <div class="song-meta" id="songMeta"></div>
+          <input type="range" id="songSeek" min="0" max="364" value="0" aria-label="Song position" />
+          <div class="song-meta"><span id="songTime">0:00</span> · <span id="songDay">press play</span></div>
+        </div>
+        <button type="button" id="downloadSong" class="icon-btn" title="Download song (WAV)" aria-label="Download song as WAV">⤓</button>
+      </div>
     </header>
 
     <div class="panel stats" id="stats" hidden>
@@ -29,6 +39,7 @@
     </div>
 
     <div class="panel controls">
+      <div class="styles" id="styles" role="radiogroup" aria-label="Style"></div>
       <div class="themes" id="themes" role="group" aria-label="Theme"></div>
       <label><input type="checkbox" data-opt="autoRotate" /> Auto-rotate</label>
       <label><input type="checkbox" data-opt="log" /> Log scale</label>
@@ -61,6 +72,7 @@
         <label><input type="checkbox" data-opt="interactive" /> Drag to rotate</label>
         <label><input type="checkbox" data-opt="zoom" /> Scroll to zoom</label>
         <label><input type="checkbox" data-opt="tooltip" /> Hover tooltips</label>
+        <label><input type="checkbox" data-opt="music" /> "Play your year" button on embeds</label>
       </section>
 
       <section>

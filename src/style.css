@@ -56,6 +56,8 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1
 
 button { cursor: pointer; background: var(--button); }
 button:hover { background: var(--button-hover); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button:disabled:hover { background: var(--button); }
 form button { background: var(--accent); border-color: transparent; color: #fff; font-weight: 600; }
 form button:hover { background: var(--accent); filter: brightness(1.1); }
 
@@ -76,6 +78,33 @@ form button:hover { background: var(--accent); filter: brightness(1.1); }
 .controls input[type="range"] { padding: 0; width: 100px; accent-color: var(--accent); }
 .controls input[type="checkbox"] { accent-color: var(--accent); }
 
+/* ---------- style picker ---------- */
+.styles { flex-basis: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.styles button {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600;
+}
+.styles button[aria-checked="true"] { background: var(--accent); color: #fff; border-color: transparent; }
+.styles small, .pro-tag {
+  font: 700 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.06em;
+  padding: 3px 5px; border-radius: 4px; background: #2c4f7c; color: #fff;
+}
+.styles button[aria-checked="true"] small { background: rgba(0, 0, 0, 0.25); }
+
+/* ---------- song player ---------- */
+.player { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.player[hidden] { display: none; }
+.play-btn {
+  flex: none; width: 44px; height: 44px; border-radius: 50%; padding: 0;
+  background: var(--accent); color: #fff; border: 0; font-size: 16px;
+}
+.play-btn:hover { background: var(--accent); filter: brightness(1.1); }
+.song-info { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.song-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.song-meta { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#songSeek { width: 100%; padding: 0; margin: 4px 0 2px; accent-color: var(--accent); }
+.icon-btn { flex: none; width: 34px; height: 34px; padding: 0; border-radius: 8px; font-size: 16px; }
+
 .legend { display: flex; align-items: center; gap: 3px; color: var(--muted); font-size: 12px; }
 .legend i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
 .legend i:first-of-type { margin-left: 4px; }
@@ -84,6 +113,7 @@ form button:hover { background: var(--accent); filter: brightness(1.1); }
 html, body { transition: background 0.3s; }
 
 .themes { display: flex; gap: 6px; }
+.themes[hidden] { display: none; }
 .themes button {
   width: 22px; height: 22px; padding: 0; border-radius: 50%;
   border: 2px solid var(--border);
@@ -139,7 +169,7 @@ body.drawer-open .stats { display: none; }
 #readmePreview { width: 100%; border-radius: 8px; border: 1px solid var(--border); }
 
 @media (max-width: 640px) {
-  .stats { top: 136px; right: 16px; min-width: 0; padding: 10px 12px; }
-  .stats .big { font-size: 20px; }
+  header.panel { right: 16px; }
+  .stats { display: none; } /* the header card already fills the top on phones */
   #username { width: 140px; }
 }
