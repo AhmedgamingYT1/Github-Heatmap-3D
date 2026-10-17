@@ -30,7 +30,7 @@ export function createHeatmap(container, initialOptions = {}) {
 
   // ---------- renderer / scene ----------
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, initialOptions.maxPixelRatio ?? 2)); // pages can trade sharpness for speed
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -303,7 +303,7 @@ export function createHeatmap(container, initialOptions = {}) {
   }
 
   // ---------- loop ----------
-  renderer.setAnimationLoop((now) => {
+  function frame(now) {
     style?.update(now);
     controls.update();
     // fog only softens the far edge of the board, however far away the camera is
@@ -319,7 +319,19 @@ export function createHeatmap(container, initialOptions = {}) {
     updateHover();
     if (useBloom()) composer.render();
     else renderer.render(scene, camera);
+  }
+
+  // Only render while the view is on screen and the tab is visible.
+  let onScreen = true;
+  let destroyed = false;
+  const syncLoop = () => renderer.setAnimationLoop(!destroyed && onScreen && !document.hidden ? frame : null);
+  const visibility = new IntersectionObserver(([entry]) => {
+    onScreen = entry.isIntersecting;
+    syncLoop();
   });
+  visibility.observe(container);
+  document.addEventListener('visibilitychange', syncLoop);
+  syncLoop();
 
   applyTheme();
   applyLiveOptions();
@@ -372,8 +384,21 @@ export function createHeatmap(container, initialOptions = {}) {
       (listeners[name] ||= []).push(fn);
       return () => (listeners[name] = listeners[name].filter((f) => f !== fn));
     },
+    /** Render the current view now and return it as an image data URL (jpeg/png/webp). */
+    snapshot(type = 'image/jpeg', quality = 0.9) {
+      // finish any grow-in animation first, so the picture shows the final scene
+      const t = performance.now();
+      for (let k = 1; k <= 60; k++) style?.update(t + k * 250);
+      controls.update();
+      if (useBloom()) composer.render();
+      else renderer.render(scene, camera);
+      return renderer.domElement.toDataURL(type, quality);
+    },
     destroy() {
       loadToken++;
+      destroyed = true;
+      visibility.disconnect();
+      document.removeEventListener('visibilitychange', syncLoop);
       renderer.setAnimationLoop(null);
       resizeObserver.disconnect();
       controls.dispose();

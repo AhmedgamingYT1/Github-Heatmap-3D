@@ -80,7 +80,7 @@ export function createCity(ctx) {
     update(now) {
       let changed = false;
       const elapsed = now - animStart;
-      const k = 1 - Math.exp(-Math.min(0.25, (now - lastFrame) / 1000) * 7.5); // same speed at any frame rate
+      const k = 1 - Math.exp(-Math.min(0.25, Math.max(0, (now - lastFrame) / 1000)) * 7.5); // same speed at any frame rate
       lastFrame = now;
       for (let i = 0; i < cells.length; i++) {
         if (elapsed < cells[i].col * 18) continue; // left-to-right wave on load

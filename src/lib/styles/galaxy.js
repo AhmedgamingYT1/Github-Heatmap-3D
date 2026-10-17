@@ -431,7 +431,7 @@ export function createGalaxy(ctx) {
     update(now) {
       uniforms.uTime.value = now / 1000;
       // the galaxy turns slowly on its own, but holds still when auto-rotate is off
-      if (ctx.opts.autoRotate) group.rotation.y -= Math.min(100, now - lastFrame) * 0.00002;
+      if (ctx.opts.autoRotate) group.rotation.y -= Math.min(100, Math.max(0, now - lastFrame)) * 0.00002;
       lastFrame = now;
       planets.forEach((p, k) => (p.rotation.y = now * 0.0002 * (1 + k * 0.1)));
       if (!settled) {
