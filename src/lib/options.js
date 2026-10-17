@@ -8,6 +8,7 @@ export const OPTIONS = {
   year: { type: 'number', default: thisYear, min: 2008, max: thisYear },
   style: { type: 'string', default: 'city' }, // city, night, galaxy, forest, heartbeat
   theme: { type: 'string', default: 'sand' }, // colors for the City style
+  palette: { type: 'string', default: 'spring' }, // leaf colors for the Forest style
   music: { type: 'bool', default: false }, // show a "play your year" button on embeds
   height: { type: 'number', default: 8, min: 2, max: 20 }, // tallest bar, in grid cells
   log: { type: 'bool', default: false }, // log scale so quiet days stay visible

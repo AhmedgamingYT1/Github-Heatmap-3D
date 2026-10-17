@@ -18,7 +18,7 @@ import { STYLES, getStyle } from './styles/index.js';
 import { glowTex } from './styles/common.js';
 
 // Options that need the scene rebuilt vs. ones a style can apply in place.
-const REBUILD_KEYS = ['style', 'theme', 'barSize', 'base', 'labels', 'title'];
+const REBUILD_KEYS = ['style', 'theme', 'palette', 'barSize', 'base', 'labels', 'title'];
 const IN_PLACE_KEYS = ['height', 'log'];
 
 export function createHeatmap(container, initialOptions = {}) {
@@ -106,6 +106,7 @@ export function createHeatmap(container, initialOptions = {}) {
   let hovered = -1;
   let highlighted = -1;
   let loadToken = 0;
+  let buildToken = 0;
   let size = { w: 1, h: 1 };
   const listeners = {};
   const emit = (name, data) => listeners[name]?.forEach((fn) => fn(data));
@@ -170,6 +171,10 @@ export function createHeatmap(container, initialOptions = {}) {
   // ---------- build ----------
   function disposeBoard() {
     board.traverse((o) => {
+      if (o.userData.shared) {
+        o.dispose?.(); // instance buffers only; geometry/materials are reused across builds (e.g. tree models)
+        return;
+      }
       o.geometry?.dispose();
       for (const m of [o.material].flat()) {
         if (!m) continue;
@@ -182,11 +187,14 @@ export function createHeatmap(container, initialOptions = {}) {
     hovered = -1;
   }
 
-  function build(keepHeights) {
+  // Styles may load assets first (create returns a promise); a newer build cancels an older one.
+  async function build(keepHeights) {
+    const token = ++buildToken;
     const prevHeights = keepHeights ? style?.heights?.() : null;
     disposeBoard();
     if (!days.length) return;
     const ctx = {
+      cancelled: () => token !== buildToken,
       board,
       renderer,
       canvas: canvas2d,
@@ -197,7 +205,19 @@ export function createHeatmap(container, initialOptions = {}) {
         return opts; // always the latest options
       },
     };
-    style = styleDef.create(ctx);
+    let built = styleDef.create(ctx);
+    if (built?.then) {
+      emit('building', { style: opts.style });
+      try {
+        built = await built;
+      } catch (error) {
+        if (token === buildToken) emit('error', error);
+        return;
+      }
+      if (token !== buildToken || !built) return;
+      emit('built', { style: opts.style });
+    }
+    style = built;
     style.resize?.(size.w, size.h);
     applyLiveOptions();
   }
