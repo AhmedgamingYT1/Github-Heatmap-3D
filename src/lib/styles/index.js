@@ -34,7 +34,7 @@ export const STYLES = {
     theme: 'galaxy',
     create: createGalaxy,
     camera: { dir: [0, 34, 42], dist: 80, halfWidth: 44 },
-    bloom: { strength: 0.75, radius: 0.55, threshold: 0.3 },
+    bloom: { strength: 0.7, radius: 0.5, threshold: 0.55 },
     lights: { hemi: ['#ffffff', '#05030d', 0.5], sun: ['#ffd9a8', 1.1], rim: ['#b58cff', 0.5] },
     fog: false,
     shadows: false,
