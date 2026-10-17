@@ -94,7 +94,8 @@ function injectStyles() {
   .vp { gap: 4px; padding: 4px; border-radius: 15px; }
   .vp-views { grid-template-columns: 1fr 1fr; }
   .vp-sep { display: none; }
-  .vp button { height: 30px; width: 30px; padding: 0; justify-content: center; }
+  .vp button { height: 30px; padding: 0; justify-content: center; }
+  .vp-views button { width: 30px; }
   .vp button span { display: none; }
 }
 `;
