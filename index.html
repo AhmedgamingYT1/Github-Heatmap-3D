@@ -156,28 +156,47 @@
         <span class="kicker">03 · Pricing</span>
         <h2>Start free. Go Pro for the good stuff.</h2>
       </div>
+      <div class="billing seg" id="billing" role="radiogroup" aria-label="Billing period">
+        <button type="button" role="radio" data-bill="month" aria-checked="true">Monthly</button>
+        <button type="button" role="radio" data-bill="year" aria-checked="false">Yearly <span class="save">save 40%</span></button>
+        <span class="seg-glider" aria-hidden="true"></span>
+      </div>
       <div class="plans">
         <div class="bezel plan">
           <div class="bezel-in">
             <h3>Free</h3>
+            <p class="plan-sub">Everything you need to show your year.</p>
             <div class="price">$0<small>forever</small></div>
-            <ul><li>3D City in 8 themes</li><li>Stats card and Weekly rhythm</li><li>Website embed and README image</li><li>Small "made with" badge</li></ul>
+            <ul><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>3D City in 8 themes</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Stats card and Weekly rhythm</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Website embed and README image</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Small "made with" badge</li></ul>
             <a href="/studio.html" class="pill-btn pill-btn-ghost">Start free</a>
           </div>
         </div>
-        <div class="bezel plan featured">
-          <div class="bezel-in">
-            <h3>Pro <span class="xcard-tag">Popular</span></h3>
-            <div class="price">$4<small>/ month · or $29 a year</small></div>
-            <ul><li>Night City, Galaxy and Forest</li><li>Your year as a song, with download</li><li>Every design and palette</li><li>Any year, HD images, STL</li><li>No badge</li></ul>
-            <button type="button" class="pill-btn pill-btn-accent" data-checkout="pro">Get Pro</button>
+
+        <div class="plan-pro">
+          <div class="pro-in">
+            <div class="pro-top">
+              <span class="pro-word">PRO</span>
+              <span class="pro-chip">Most popular</span>
+            </div>
+            <div class="pro-fan" aria-hidden="true">
+              <img src="/previews/night.jpg" alt="" loading="lazy" />
+              <img src="/previews/galaxy.jpg" alt="" loading="lazy" />
+              <img src="/previews/forest.jpg" alt="" loading="lazy" />
+            </div>
+            <p class="plan-sub">Every world, your song and every design.</p>
+            <div class="price pro-price"><span id="proPrice">$4</span><small id="proPer">/ month</small></div>
+            <p class="pro-billed" id="proBilled">Billed monthly. Cancel anytime.</p>
+            <ul><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Night City, Galaxy and Forest</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Your year as a song, with download</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Every design, theme and palette</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Any year, HD images and STL</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>No badge on your embeds</li></ul>
+            <button type="button" class="pill-btn pro-btn" data-checkout="pro">Get Pro <span aria-hidden="true">→</span></button>
           </div>
         </div>
+
         <div class="bezel plan">
           <div class="bezel-in">
             <h3>Lifetime</h3>
-            <div class="price">$49<small>once · launch offer</small></div>
-            <ul><li>Everything in Pro, forever</li><li>Every new world as it ships</li><li>Your name on the supporters wall</li></ul>
+            <p class="plan-sub">Pay once. Pro forever.</p>
+            <div class="price">$49<small>once</small></div>
+            <ul><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Everything in Pro, forever</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Every new world as it ships</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Your name on the supporters wall</li></ul>
             <button type="button" class="pill-btn pill-btn-ghost" data-checkout="lifetime">Get Lifetime</button>
           </div>
         </div>

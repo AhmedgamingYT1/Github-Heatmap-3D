@@ -230,6 +230,32 @@ const counter = new IntersectionObserver((entries) => {
 document.querySelectorAll('[data-count]').forEach((el) => counter.observe(el));
 
 // ---------- pricing ----------
+const billing = $('billing');
+function moveBillingGlider() {
+  const on = billing.querySelector('[aria-checked="true"]');
+  const g = billing.querySelector('.seg-glider');
+  g.style.width = `${on.offsetWidth}px`;
+  g.style.transform = `translateX(${on.offsetLeft}px)`;
+}
+billing.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-bill]');
+  if (!b || b.getAttribute('aria-checked') === 'true') return;
+  for (const x of billing.querySelectorAll('button')) x.setAttribute('aria-checked', x === b);
+  moveBillingGlider();
+  const yearly = b.dataset.bill === 'year';
+  const price = $('proPrice');
+  price.classList.add('swap');
+  setTimeout(() => {
+    price.textContent = yearly ? '$2.42' : '$4';
+    $('proPer').textContent = '/ month';
+    $('proBilled').textContent = yearly ? 'Billed $29 yearly. Cancel anytime.' : 'Billed monthly. Cancel anytime.';
+    price.classList.remove('swap');
+  }, 180);
+});
+addEventListener('resize', moveBillingGlider);
+document.fonts?.ready.then(moveBillingGlider);
+moveBillingGlider();
+
 for (const b of document.querySelectorAll('[data-checkout]')) {
   b.addEventListener('click', () => {
     $('checkoutNote').textContent = 'Checkout isn’t open yet. Payments are coming next; until then everything is free in the Studio.';
