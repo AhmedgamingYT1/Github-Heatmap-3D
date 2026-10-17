@@ -2,192 +2,194 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>GitHub Heatmap 3D</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="description" content="Turn your GitHub contributions into a 3D city, a galaxy, a forest, a song and beautiful cards. Embed them on your website or README." />
-    <link rel="stylesheet" href="/src/landing.css" />
+    <meta name="theme-color" content="#08080a" />
+    <link rel="preload" as="image" href="/previews/night.jpg" />
   </head>
   <body>
-    <nav class="nav" id="nav">
-      <a href="#top" class="brand"><img src="/favicon.svg" alt="" width="22" height="22" /> Heatmap 3D</a>
+    <div class="grain" aria-hidden="true"></div>
+
+    <nav class="nav" aria-label="Main">
+      <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>Heatmap 3D</a>
       <div class="nav-links">
-        <a href="#styles">Styles</a>
-        <a href="#song">Song</a>
-        <a href="#designs">Designs</a>
-        <a href="#anywhere">Embed</a>
+        <a href="#explore">Explore</a>
+        <a href="#features">Features</a>
         <a href="#pricing">Pricing</a>
       </div>
-      <a href="/studio.html" class="btn btn-small">Open Studio</a>
+      <a href="/studio.html" class="pill-btn pill-btn-sm" id="navStudio">Studio <span aria-hidden="true">→</span></a>
     </nav>
 
-    <!-- 1. Hero: the product, centered -->
+    <!-- ===== Hero: one screen, the product in the middle ===== -->
     <header class="hero" id="top">
-      <p class="eyebrow">For every GitHub profile</p>
-      <h1 class="display">Your year of code.<br /><span class="grad">Built in 3D.</span></h1>
-      <p class="lede">Every contribution becomes something you can spin, explore and share: a city, a galaxy, a forest, even a song.</p>
-      <form class="try" id="tryForm">
-        <label for="tryUser" class="sr-only">GitHub username</label>
-        <span class="at">github.com/</span>
-        <input id="tryUser" placeholder="your-username" autocomplete="off" spellcheck="false" required />
-        <button type="submit" class="btn">Build mine</button>
-      </form>
-      <div class="hero-stage" id="heroStage" aria-label="Interactive 3D contribution graph"></div>
-      <p class="hero-caption" id="heroCaption">Drag to spin it.</p>
+      <div class="hero-copy">
+        <span class="badge"><i class="pulse" aria-hidden="true"></i>4 worlds · 1 song · free to start</span>
+        <h1>Your year of code, <span class="dots">in 3D.</span></h1>
+        <p class="sub">Every contribution becomes a building, a star or a tree. Spin it, play it, put it anywhere.</p>
+      </div>
+
+      <div class="hero-stage" id="heroStage" aria-label="Interactive 3D contribution graph">
+        <p class="hero-hint" id="heroHint">Loading <span id="heroWho">…</span></p>
+      </div>
+
+      <div class="hero-bar">
+        <form class="try" id="tryForm">
+          <label for="tryUser" class="sr-only">GitHub username</label>
+          <span class="try-prefix">github.com/</span>
+          <input id="tryUser" placeholder="username" autocomplete="off" spellcheck="false" autocapitalize="off" />
+          <button type="submit" class="pill-btn">Build mine <kbd>↵</kbd></button>
+        </form>
+        <div class="seg" id="heroStyles" role="radiogroup" aria-label="Style">
+          <button type="button" role="radio" data-style="night" aria-checked="true">Night City</button>
+          <button type="button" role="radio" data-style="galaxy" aria-checked="false">Galaxy</button>
+          <button type="button" role="radio" data-style="forest" aria-checked="false">Forest</button>
+          <button type="button" role="radio" data-style="city" aria-checked="false">City</button>
+          <span class="seg-glider" aria-hidden="true"></span>
+        </div>
+      </div>
     </header>
 
-    <!-- 2. Styles: one 3D view that changes as you scroll -->
-    <section class="showcase" id="styles">
-      <div class="showcase-stage" id="showcaseStage">
-        <div class="showcase-canvas" id="showcaseCanvas"></div>
-        <div class="showcase-loading" id="showcaseLoading" hidden>Growing the forest…</div>
+    <!-- ===== Explore: expanding cards ===== -->
+    <section class="section" id="explore">
+      <div class="section-head">
+        <span class="kicker">01 · Explore</span>
+        <h2>Pick a world for your year.</h2>
+        <p class="sub">Hover to look closer. Open any of them live, then make it yours in the Studio.</p>
       </div>
-      <div class="showcase-steps">
-        <article class="step" data-style="city">
-          <p class="eyebrow">City · Free</p>
-          <h2>Every day, a building.</h2>
-          <p>The classic. One bar per day, as tall as that day's contributions, in eight color themes from Sand to Neon.</p>
+      <div class="expand" id="expand">
+        <button type="button" class="xcard" data-open="night" style="--img: url(/previews/night.jpg)">
+          <span class="xcard-tag">Pro</span>
+          <span class="xcard-body"><b>Night City</b><span>Glass towers for your best days, lit windows and traffic for the rest.</span></span>
+          <span class="xcard-go" aria-hidden="true">↗</span>
+        </button>
+        <button type="button" class="xcard" data-open="galaxy" style="--img: url(/previews/galaxy.jpg)">
+          <span class="xcard-tag">Pro</span>
+          <span class="xcard-body"><b>Galaxy</b><span>January at the core, December at the rim. Big days become planets.</span></span>
+          <span class="xcard-go" aria-hidden="true">↗</span>
+        </button>
+        <button type="button" class="xcard" data-open="forest" style="--img: url(/previews/forest.jpg)">
+          <span class="xcard-tag">Pro</span>
+          <span class="xcard-body"><b>Forest</b><span>A real tree for every day you shipped. Big days bloom.</span></span>
+          <span class="xcard-go" aria-hidden="true">↗</span>
+        </button>
+        <button type="button" class="xcard" data-open="sakura" style="--img: url(/previews/sakura.jpg)">
+          <span class="xcard-tag">Pro</span>
+          <span class="xcard-body"><b>Sakura</b><span>The forest in four seasons: Spring, Autumn, Sakura and Dream.</span></span>
+          <span class="xcard-go" aria-hidden="true">↗</span>
+        </button>
+        <button type="button" class="xcard" data-open="city" style="--img: url(/previews/city.jpg)">
+          <span class="xcard-tag free">Free</span>
+          <span class="xcard-body"><b>City</b><span>The classic. One bar per day in eight color themes.</span></span>
+          <span class="xcard-go" aria-hidden="true">↗</span>
+        </button>
+        <button type="button" class="xcard xcard-song" data-open="song" id="songCard">
+          <span class="xcard-wave" id="songWave" aria-hidden="true"></span>
+          <span class="xcard-tag">Pro</span>
+          <span class="xcard-body"><b id="songTitle">Your song</b><span id="songMeta">One note per day. Press to play.</span></span>
+          <span class="xcard-go" id="songIcon" aria-hidden="true">▶</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== Features: bento of bezel cards ===== -->
+    <section class="section" id="features">
+      <div class="section-head">
+        <span class="kicker">02 · Features</span>
+        <h2>Made to be shown off.</h2>
+      </div>
+      <div class="bento">
+        <article class="bezel b-card">
+          <div class="bezel-in art" id="cardArt"></div>
+          <div class="bezel-cap"><b>README cards</b><span>Stats, rhythm, months or the classic grid. Updates every hour.</span></div>
         </article>
-        <article class="step" data-style="night">
-          <p class="eyebrow">Night City · Pro</p>
-          <h2>Your busiest weeks become a skyline.</h2>
-          <p>Glass towers for your best days, apartments for quiet ones. Lit windows, street lamps, and traffic that never stops.</p>
+        <article class="bezel b-numbers">
+          <div class="bezel-in numbers">
+            <div><b data-count="365">0</b><span>days, every one drawn</span></div>
+            <div><b data-count="4">0</b><span>3D worlds</span></div>
+            <div><b data-count="12">0</b><span>themes and palettes</span></div>
+          </div>
         </article>
-        <article class="step" data-style="galaxy">
-          <p class="eyebrow">Galaxy · Pro</p>
-          <h2>A year, in orbit.</h2>
-          <p>January at the core, December at the rim. Every day is a star; your biggest days become planets, the top three with rings.</p>
+        <article class="bezel b-embed">
+          <div class="bezel-in code">
+            <div class="code-top"><span class="dots3" aria-hidden="true"><i></i><i></i><i></i></span><span>index.html</span><button type="button" class="copy" id="copyEmbed">Copy</button></div>
+            <pre id="embedCode"></pre>
+          </div>
+          <div class="bezel-cap"><b>One line, any website</b><span>Fully interactive 3D in an iframe or a script tag.</span></div>
         </article>
-        <article class="step" data-style="forest">
-          <p class="eyebrow">Forest · Pro</p>
-          <h2>Watch your work grow.</h2>
-          <p>A real tree for every day you shipped. Big days grow tall and bloom. Four seasons of color: Spring, Autumn, Sakura and Dream.</p>
+        <article class="bezel b-donut">
+          <div class="bezel-in art" id="donutArt"></div>
+          <div class="bezel-cap"><b>Weekly rhythm</b><span>See which days you really ship.</span></div>
+        </article>
+        <article class="bezel b-themes">
+          <div class="bezel-in swatches" id="swatches"></div>
+          <div class="bezel-cap"><b>Your colors</b><span>Eight themes and four forest seasons.</span></div>
+        </article>
+        <article class="bezel b-print">
+          <div class="bezel-in print">
+            <svg viewBox="0 0 120 80" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M10 60 L60 75 L110 60 L60 45 Z"/><path d="M10 60 V64 L60 79 L110 64 V60"/><path d="M40 52 V30 M48 54 V18 M56 56 V36 M64 54 V10 M72 52 V26 M80 50 V34"/></g></svg>
+          </div>
+          <div class="bezel-cap"><b>Print your year</b><span>Download an STL and hold it in your hand.</span></div>
         </article>
       </div>
     </section>
 
-    <!-- 3. Song -->
-    <section class="song dark" id="song">
-      <p class="eyebrow">Your year as a song · Pro</p>
-      <h2 class="display-2">Every year has a sound.</h2>
-      <p class="lede">One note per day. Your username picks the key, your output sets the tempo. No two profiles sound alike.</p>
-      <div class="song-player">
-        <button type="button" class="play" id="songPlay" aria-label="Play the song">▶</button>
-        <div class="song-info">
-          <div class="song-title" id="songTitle">…</div>
-          <div class="song-meta" id="songMeta"></div>
-        </div>
+    <!-- ===== Pricing ===== -->
+    <section class="section" id="pricing">
+      <div class="section-head">
+        <span class="kicker">03 · Pricing</span>
+        <h2>Start free. Go Pro for the good stuff.</h2>
       </div>
-      <div class="wave" id="songWave" aria-hidden="true"></div>
-      <p class="song-day" id="songDay">&nbsp;</p>
-    </section>
-
-    <!-- 4. 2D designs -->
-    <section class="designs" id="designs">
-      <p class="eyebrow">Designs</p>
-      <h2 class="display-2">Prefer flat? Beautiful cards.</h2>
-      <p class="lede">The same year as clean 2D designs. Every one works as a GitHub README image and follows your theme.</p>
-      <div class="chips" id="designThemes" role="group" aria-label="Design theme"></div>
-      <div class="design-grid" id="designGrid"></div>
-    </section>
-
-    <!-- 5. Anywhere -->
-    <section class="anywhere" id="anywhere">
-      <p class="eyebrow">Put it anywhere</p>
-      <h2 class="display-2">One line. Anywhere you show your work.</h2>
-      <div class="three">
-        <div class="use">
-          <h3>Your website</h3>
-          <p>Fully interactive 3D, sized to fit. Paste one line of HTML.</p>
-          <pre><code>&lt;iframe src="…/embed.html?user=you&amp;style=galaxy"&gt;&lt;/iframe&gt;</code></pre>
-        </div>
-        <div class="use">
-          <h3>GitHub README</h3>
-          <p>A crisp image that updates every hour and links to the 3D version.</p>
-          <pre><code>![My year](…/api/heatmap?user=you&amp;type=card)</code></pre>
-        </div>
-        <div class="use">
-          <h3>Share and print</h3>
-          <p>A link to your exact view, the song as a WAV file, or an STL ready for a 3D printer.</p>
-          <pre><code>…/studio.html?user=you&amp;style=night</code></pre>
-        </div>
-      </div>
-      <a href="/studio.html" class="btn btn-large">Open the Studio</a>
-    </section>
-
-    <!-- 6. Pricing -->
-    <section class="pricing" id="pricing">
-      <p class="eyebrow">Pricing</p>
-      <h2 class="display-2">Start free. Go Pro for the good stuff.</h2>
       <div class="plans">
-        <div class="plan">
-          <h3>Free</h3>
-          <div class="price">$0</div>
-          <ul>
-            <li>3D City in 8 themes</li>
-            <li>Stats card and Weekly rhythm</li>
-            <li>Website embed and README image</li>
-            <li>Current year</li>
-            <li>Small "made with" badge</li>
-          </ul>
-          <a href="/studio.html" class="btn btn-ghost">Start free</a>
+        <div class="bezel plan">
+          <div class="bezel-in">
+            <h3>Free</h3>
+            <div class="price">$0<small>forever</small></div>
+            <ul><li>3D City in 8 themes</li><li>Stats card and Weekly rhythm</li><li>Website embed and README image</li><li>Small "made with" badge</li></ul>
+            <a href="/studio.html" class="pill-btn pill-btn-ghost">Start free</a>
+          </div>
         </div>
-        <div class="plan featured">
-          <span class="ribbon">Most popular</span>
-          <h3>Pro</h3>
-          <div class="price">$4<small>/month</small></div>
-          <p class="sub">or $29 a year</p>
-          <ul>
-            <li>Night City, Galaxy and Forest</li>
-            <li>Your year as a song, with download</li>
-            <li>Every design and color palette</li>
-            <li>Any year and all-time boards</li>
-            <li>HD images and STL for 3D printing</li>
-            <li>No badge</li>
-          </ul>
-          <button type="button" class="btn" data-checkout="pro">Get Pro</button>
+        <div class="bezel plan featured">
+          <div class="bezel-in">
+            <h3>Pro <span class="xcard-tag">Popular</span></h3>
+            <div class="price">$4<small>/ month · or $29 a year</small></div>
+            <ul><li>Night City, Galaxy and Forest</li><li>Your year as a song, with download</li><li>Every design and palette</li><li>Any year, HD images, STL</li><li>No badge</li></ul>
+            <button type="button" class="pill-btn pill-btn-accent" data-checkout="pro">Get Pro</button>
+          </div>
         </div>
-        <div class="plan">
-          <h3>Lifetime</h3>
-          <div class="price">$49<small>once</small></div>
-          <p class="sub">Launch offer, limited</p>
-          <ul>
-            <li>Everything in Pro, forever</li>
-            <li>Every new style as it ships</li>
-            <li>Your name on the supporters wall</li>
-          </ul>
-          <button type="button" class="btn btn-ghost" data-checkout="lifetime">Get Lifetime</button>
+        <div class="bezel plan">
+          <div class="bezel-in">
+            <h3>Lifetime</h3>
+            <div class="price">$49<small>once · launch offer</small></div>
+            <ul><li>Everything in Pro, forever</li><li>Every new world as it ships</li><li>Your name on the supporters wall</li></ul>
+            <button type="button" class="pill-btn pill-btn-ghost" data-checkout="lifetime">Get Lifetime</button>
+          </div>
         </div>
       </div>
-      <p class="checkout-note" id="checkoutNote" role="status"></p>
-    </section>
-
-    <!-- 7. FAQ -->
-    <section class="faq">
-      <h2 class="display-2">Questions</h2>
-      <details>
-        <summary>Where does the data come from?</summary>
-        <p>From your public GitHub contribution calendar, the same one on your profile. No sign-in is needed to try it.</p>
-      </details>
-      <details>
-        <summary>Are private contributions included?</summary>
-        <p>Only if you've turned on "Include private contributions" on your GitHub profile. Then they're counted, without any details.</p>
-      </details>
-      <details>
-        <summary>Will my README image stay up to date?</summary>
-        <p>Yes. It's redrawn from your latest contributions and refreshed about once an hour.</p>
-      </details>
-      <details>
-        <summary>How does Pro work with my embeds?</summary>
-        <p>Pro is linked to your GitHub username. Once you upgrade, every embed and README image for your profile unlocks automatically. There are no keys to paste.</p>
-      </details>
+      <p class="note" id="checkoutNote" role="status"></p>
     </section>
 
     <footer class="footer">
-      <a href="#top" class="brand"><img src="/favicon.svg" alt="" width="20" height="20" /> Heatmap 3D</a>
-      <p>Made for people who ship. Trees by <a href="https://github.com/dgreenheck/ez-tree" rel="noopener">EZ-Tree</a>.</p>
-      <a href="https://github.com/vimalsri318/Github-Heatmap-3D" rel="noopener">GitHub</a>
+      <div class="wordmark" aria-hidden="true">HEATMAP 3D</div>
+      <div class="footer-row">
+        <span>Made for people who ship.</span>
+        <span><a href="/studio.html">Studio</a> · <a href="https://github.com/vimalsri318/Github-Heatmap-3D" rel="noopener">GitHub</a> · Trees by <a href="https://github.com/dgreenheck/ez-tree" rel="noopener">EZ-Tree</a></span>
+      </div>
     </footer>
+
+    <!-- live viewer for a world, opened from the Explore cards -->
+    <dialog class="viewer" id="viewer" aria-labelledby="viewerTitle">
+      <div class="viewer-head">
+        <div><span class="kicker" id="viewerKicker"></span><h3 id="viewerTitle"></h3></div>
+        <button type="button" class="icon-btn" id="viewerClose" aria-label="Close">✕</button>
+      </div>
+      <div class="viewer-stage" id="viewerStage"><p class="hero-hint" id="viewerHint">Loading…</p></div>
+      <div class="viewer-foot">
+        <span class="sub" id="viewerNote">Drag to spin · scroll to zoom</span>
+        <a class="pill-btn pill-btn-accent" id="viewerStudio" href="/studio.html">Make it mine in the Studio <span aria-hidden="true">→</span></a>
+      </div>
+    </dialog>
 
     <script type="module" src="/src/landing.js"></script>
   </body>

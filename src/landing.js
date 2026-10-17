@@ -1,199 +1,202 @@
-// Landing page: a live 3D hero, a scroll-driven style showcase, the song, 2D designs and pricing.
+// Landing page: one live 3D hero, expanding style cards that open a live viewer,
+// a bento of features and pricing. Only one 3D view renders at a time, and only while visible.
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
+import '@fontsource-variable/doto';
+import './landing.css';
 import { createHeatmap } from './lib/heatmap.js';
 import { fetchContributions, sampleContributions } from './lib/data.js';
 import { THEMES } from './lib/themes.js';
-import { STYLES } from './lib/styles/index.js';
+import { FOREST_PALETTES } from './lib/styles/forest.js';
 import { composeSong, createSongPlayer } from './lib/song.js';
-import { renderChartSvg, CHART_TYPES } from './lib/charts.js';
+import { renderChartSvg } from './lib/charts.js';
 
 // The profile shown across the landing page. Any public GitHub username works.
 const HERO_USER = 'torvalds';
 const YEAR = new Date().getFullYear();
-
 const $ = (id) => document.getElementById(id);
-document.documentElement.classList.add('js');
 
-// One fetch shared by the song and the designs (the 3D views fetch on their own).
+// Styles with glow need an opaque canvas; the others float on the page.
+const GLOWS = new Set(['night', 'galaxy']);
 const daysPromise = fetchContributions(HERO_USER, YEAR).catch(() => sampleContributions(YEAR));
 
-// Let vertical swipes scroll the page on phones; horizontal drags still spin the model.
+// Vertical swipes scroll the page on phones; horizontal drags still spin the model.
 const allowPageScroll = (el) => el.querySelectorAll('canvas').forEach((c) => (c.style.touchAction = 'pan-y'));
 
+function studioUrl(params) {
+  const user = $('tryUser').value.trim().replace(/^@/, '');
+  const q = new URLSearchParams({ ...(user ? { user } : {}), ...params });
+  return `/studio.html?${q}`;
+}
+
 // ---------- hero ----------
+let heroStyle = 'night';
+$('heroWho').textContent = `@${HERO_USER}…`;
 const hero = createHeatmap($('heroStage'), {
   user: HERO_USER,
   year: YEAR,
-  style: 'city',
+  style: heroStyle,
   theme: 'sand',
-  transparent: true,
+  transparent: !GLOWS.has(heroStyle),
   zoom: false,
-  rotateSpeed: 0.6,
+  rotateSpeed: 0.45,
+  maxPixelRatio: 1.5,
 });
 allowPageScroll($('heroStage'));
-hero.on('load', ({ days }) => {
-  const total = days.reduce((a, d) => a + d.count, 0);
-  $('heroCaption').textContent = `@${HERO_USER} · ${total.toLocaleString()} contributions in ${YEAR} · drag to spin`;
+if (import.meta.env.DEV) window.__hero = hero; // for debugging
+hero.on('load', () => ($('heroHint').hidden = true));
+hero.on('building', () => {
+  $('heroHint').textContent = 'Growing the forest…';
+  $('heroHint').hidden = false;
 });
+hero.on('built', () => ($('heroHint').hidden = true));
+
+const seg = $('heroStyles');
+const glider = seg.querySelector('.seg-glider');
+function moveGlider() {
+  const on = seg.querySelector('[aria-checked="true"]');
+  glider.style.width = `${on.offsetWidth}px`;
+  glider.style.transform = `translateX(${on.offsetLeft}px)`;
+}
+seg.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-style]');
+  if (!b || b.dataset.style === heroStyle) return;
+  heroStyle = b.dataset.style;
+  for (const x of seg.querySelectorAll('button')) x.setAttribute('aria-checked', x === b);
+  moveGlider();
+  hero.setOptions({ style: heroStyle, transparent: !GLOWS.has(heroStyle) });
+  $('navStudio').href = studioUrl({ style: heroStyle });
+});
+addEventListener('resize', moveGlider);
+document.fonts?.ready.then(moveGlider);
+moveGlider();
 
 $('tryForm').addEventListener('submit', (e) => {
   e.preventDefault();
-  const user = $('tryUser').value.trim().replace(/^@/, '');
-  if (user) location.href = `/studio.html?user=${encodeURIComponent(user)}`;
+  location.href = studioUrl({ style: heroStyle });
 });
 
-// ---------- styles showcase: one 3D view, restyled as each step scrolls into view ----------
-let showcase = null;
-const stage = $('showcaseStage');
-const steps = [...document.querySelectorAll('.step')];
+// ---------- explore: expanding cards open a live viewer ----------
+const WORLDS = {
+  night: { title: 'Night City', kicker: 'Pro · 3D', opts: { style: 'night' } },
+  galaxy: { title: 'Galaxy', kicker: 'Pro · 3D', opts: { style: 'galaxy' } },
+  forest: { title: 'Forest', kicker: 'Pro · 3D', opts: { style: 'forest', palette: 'spring' } },
+  sakura: { title: 'Forest · Sakura', kicker: 'Pro · 3D', opts: { style: 'forest', palette: 'sakura' } },
+  city: { title: 'City', kicker: 'Free · 3D', opts: { style: 'city', theme: 'sand' } },
+};
 
-function themeFor(style) {
-  return THEMES[STYLES[style].theme || 'sand'];
-}
-
-function setShowcaseStyle(style) {
-  const theme = themeFor(style);
-  stage.style.background = theme.background;
-  document.querySelector('.showcase').toggleAttribute('data-dark', theme.dark);
-  steps.forEach((s) => s.classList.toggle('active', s.dataset.style === style));
-  showcase?.setOptions({ style });
-  updateNav();
-}
-
-new IntersectionObserver(
-  (entries) => {
-    if (!entries.some((e) => e.isIntersecting) || showcase) return;
-    showcase = createHeatmap($('showcaseCanvas'), {
-      user: HERO_USER,
-      year: YEAR,
-      style: document.querySelector('.step.active')?.dataset.style || 'city',
-      theme: 'sand',
-      interactive: false,
-      tooltip: false,
-      rotateSpeed: 0.5,
+const viewer = $('viewer');
+let viewerMap = null;
+function openViewer(key) {
+  const w = WORLDS[key];
+  $('viewerTitle').textContent = w.title;
+  $('viewerKicker').textContent = w.kicker;
+  $('viewerStudio').href = studioUrl(w.opts);
+  $('viewerHint').hidden = false;
+  viewer.showModal();
+  if (!viewerMap) {
+    viewerMap = createHeatmap($('viewerStage'), { user: HERO_USER, year: YEAR, rotateSpeed: 0.6, maxPixelRatio: 1.5, ...w.opts });
+    viewerMap.on('load', () => ($('viewerHint').hidden = true));
+    viewerMap.on('built', () => ($('viewerHint').hidden = true));
+    viewerMap.on('building', () => {
+      $('viewerHint').textContent = 'Growing the forest…';
+      $('viewerHint').hidden = false;
     });
-    allowPageScroll($('showcaseCanvas'));
-    showcase.on('building', () => ($('showcaseLoading').hidden = false));
-    showcase.on('built', () => ($('showcaseLoading').hidden = true));
-  },
-  { rootMargin: '100% 0px' },
-).observe(stage);
-
-const stepObserver = new IntersectionObserver(
-  (entries) => {
-    for (const e of entries) if (e.isIntersecting) setShowcaseStyle(e.target.dataset.style);
-  },
-  { rootMargin: '-45% 0px -45% 0px' }, // the step crossing the middle of the screen wins
-);
-steps.forEach((s) => stepObserver.observe(s));
-steps[0].classList.add('active');
-
-// ---------- nav turns dark over dark sections ----------
-const nav = $('nav');
-function updateNav() {
-  const under = document.elementsFromPoint(innerWidth / 2, 60).find((el) => el.matches?.('section, header'));
-  const dark = under?.classList.contains('dark') || (under?.classList.contains('showcase') && under.hasAttribute('data-dark'));
-  nav.classList.toggle('on-dark', Boolean(dark));
+  } else {
+    viewerMap.setOptions({ palette: 'spring', theme: 'sand', ...w.opts });
+    $('viewerHint').hidden = w.opts.style !== 'forest';
+  }
 }
-let navTick = 0;
-addEventListener('scroll', () => {
-  cancelAnimationFrame(navTick);
-  navTick = requestAnimationFrame(updateNav);
-}, { passive: true });
+$('viewerClose').addEventListener('click', () => viewer.close());
+viewer.addEventListener('click', (e) => e.target === viewer && viewer.close()); // click on the backdrop
+// (closing hides the stage, so the viewer's 3D stops rendering on its own)
 
-// ---------- song ----------
+$('expand').addEventListener('click', (e) => {
+  const card = e.target.closest('.xcard');
+  if (!card) return;
+  if (card.dataset.open === 'song') toggleSong();
+  else openViewer(card.dataset.open);
+});
+
+// ---------- the song card ----------
 let player = null;
+let waveBars = [];
+const BAR_DAYS = 5; // each bar of the little waveform is five days
 daysPromise.then((days) => {
   const song = composeSong(days, HERO_USER);
   $('songTitle').textContent = `“${song.title}”`;
-  const secs = Math.round(song.duration);
-  $('songMeta').textContent = `@${HERO_USER} · ${song.key} · ${song.bpm} bpm · ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
-
-  const wave = $('songWave');
+  $('songMeta').textContent = `@${HERO_USER}'s ${YEAR} · ${song.key} · ${song.bpm} bpm. Press to play.`;
   const max = Math.max(1, ...days.map((d) => d.count));
-  const bars = days.map((d) => {
+  for (let k = 0; k < days.length; k += BAR_DAYS) {
+    const peak = Math.max(...days.slice(k, k + BAR_DAYS).map((d) => d.count));
     const i = document.createElement('i');
-    i.style.height = `${d.count ? 8 + Math.sqrt(d.count / max) * 92 : 3}%`;
-    if (d.count) i.className = 'lit';
-    wave.appendChild(i);
-    return i;
-  });
-  let last = -1;
-  const paint = (step) => {
-    bars.forEach((b, k) => {
-      b.classList.toggle('done', k < step && days[k].count > 0);
-      b.classList.toggle('now', k === step);
-    });
-    last = step;
-  };
-  player = createSongPlayer(song, {
-    onStep(i) {
-      if (i !== last) paint(i);
-      const d = days[i];
-      const date = new Date(d.date + 'T00:00:00Z').toLocaleDateString(undefined, { month: 'long', day: 'numeric', timeZone: 'UTC' });
-      $('songDay').textContent = `${date} · ${d.count} contribution${d.count === 1 ? '' : 's'}`;
-    },
-    onState(playing) {
-      $('songPlay').textContent = playing ? '❚❚' : '▶';
-      $('songPlay').setAttribute('aria-label', playing ? 'Pause the song' : 'Play the song');
-    },
-    onEnd: () => paint(-1),
-  });
-  // click the waveform to jump to that day
-  wave.addEventListener('click', (e) => {
-    const r = wave.getBoundingClientRect();
-    const step = Math.floor(((e.clientX - r.left) / r.width) * days.length);
-    player.seek(step);
-    if (!player.playing) player.play(step);
-  });
-});
-$('songPlay').addEventListener('click', () => (player?.playing ? player.pause() : player?.play()));
-
-// ---------- 2D designs ----------
-const DESIGN_THEMES = Object.entries(THEMES).filter(([, t]) => !t.hidden);
-let designTheme = 'sand';
-function renderDesigns(days) {
-  $('designGrid').innerHTML = Object.entries(CHART_TYPES)
-    .map(([type, name]) => {
-      const svg = renderChartSvg(type, days, { user: HERO_USER, theme: designTheme });
-      return `<figure class="design${type === 'calendar' ? ' wide' : ''}"><div class="art">${svg}</div><figcaption class="design-name">${name}<span>README ready</span></figcaption></figure>`;
-    })
-    .join('');
-  for (const b of $('designThemes').children) b.setAttribute('aria-pressed', b.dataset.theme === designTheme);
-}
-daysPromise.then((days) => {
-  for (const [id, t] of DESIGN_THEMES) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.dataset.theme = id;
-    b.innerHTML = `<i style="background:${t.levels[3]}"></i>${t.name}`;
-    b.addEventListener('click', () => {
-      designTheme = id;
-      renderDesigns(days);
-    });
-    $('designThemes').appendChild(b);
+    i.style.height = `${peak ? 10 + Math.sqrt(peak / max) * 90 : 4}%`;
+    $('songWave').appendChild(i);
+    waveBars.push(i);
   }
-  renderDesigns(days);
+  player = createSongPlayer(song, {
+    onStep: (step) => waveBars.forEach((b, k) => b.classList.toggle('on', k * BAR_DAYS <= step)),
+    onState(playing) {
+      $('songIcon').textContent = playing ? '❚❚' : '▶';
+      $('songCard').classList.toggle('is-open', playing);
+    },
+    onEnd: () => waveBars.forEach((b) => b.classList.remove('on')),
+  });
 });
+function toggleSong() {
+  if (!player) return;
+  player.playing ? player.pause() : player.play();
+}
+
+// ---------- features ----------
+daysPromise.then((days) => {
+  $('cardArt').innerHTML = renderChartSvg('card', days, { user: HERO_USER, theme: 'halloween' });
+  $('donutArt').innerHTML = renderChartSvg('donut', days, { user: HERO_USER, theme: 'halloween' });
+});
+
+const embed = `<iframe src="${location.origin}/embed.html?user=you&style=galaxy"\n  style="width:100%;height:420px;border:0"></iframe>`;
+const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+// color strings first, then tags (the other order would recolor the quotes in our own spans)
+$('embedCode').innerHTML = esc(embed)
+  .replace(/"([^"]*)"/g, '"<span class="s">$1</span>"')
+  .replace(/(&lt;\/?iframe)/g, '<span class="k">$1</span>');
+$('copyEmbed').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(embed);
+    $('copyEmbed').textContent = 'Copied';
+  } catch {
+    $('copyEmbed').textContent = 'Select to copy';
+  }
+  setTimeout(() => ($('copyEmbed').textContent = 'Copy'), 1400);
+});
+
+$('swatches').innerHTML = [
+  ...Object.values(THEMES).filter((t) => !t.hidden).map((t) => [t.name, t.background, t.levels[3]]),
+  ...Object.values(FOREST_PALETTES).map((p) => [`Forest ${p.name}`, p.levels[1], p.levels[4]]),
+]
+  .map(([name, a, b]) => `<i title="${name}" style="--a:${a};--b:${b}"></i>`)
+  .join('');
+
+// count numbers up when they scroll into view
+const counter = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (!e.isIntersecting) continue;
+    counter.unobserve(e.target);
+    const to = Number(e.target.dataset.count);
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / 1100);
+      e.target.textContent = Math.round(to * (1 - (1 - t) ** 3));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+});
+document.querySelectorAll('[data-count]').forEach((el) => counter.observe(el));
 
 // ---------- pricing ----------
 for (const b of document.querySelectorAll('[data-checkout]')) {
   b.addEventListener('click', () => {
-    $('checkoutNote').textContent = 'Checkout isn’t open yet. Payments are coming next. Until then, everything is free to try in the Studio.';
+    $('checkoutNote').textContent = 'Checkout isn’t open yet. Payments are coming next; until then everything is free in the Studio.';
   });
 }
-
-// ---------- gentle entrance for each section's content ----------
-const reveal = new IntersectionObserver(
-  (entries) => {
-    for (const e of entries) if (e.isIntersecting) {
-      e.target.classList.add('in');
-      reveal.unobserve(e.target);
-    }
-  },
-  { rootMargin: '0px 0px -10% 0px' },
-);
-document.querySelectorAll('.song > *, .designs > *, .anywhere > *, .pricing > *, .faq > *').forEach((el) => {
-  el.classList.add('reveal');
-  reveal.observe(el);
-});
-updateNav();
