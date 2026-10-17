@@ -114,7 +114,7 @@ export const THEMES = {
     text: '#2f4227',
     label: '#5d7352',
     accent: '#4c7a34',
-    levels: ['#9cbf7a', '#7fb069', '#5c9a3a', '#3f7d2a', '#2d5f1f'],
+    levels: ['#a9cf7f', '#8cc66b', '#3f8a2e', '#f7b6d2', '#e0559a'], // grass, then canopy colors by level
   },
   monitor: {
     name: 'Heartbeat',

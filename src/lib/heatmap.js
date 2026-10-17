@@ -61,7 +61,7 @@ export function createHeatmap(container, initialOptions = {}) {
   const sun = new THREE.DirectionalLight('#ffffff', 2.2);
   sun.position.set(-20, 40, 25);
   sun.shadow.mapSize.set(2048, 2048);
-  Object.assign(sun.shadow.camera, { left: -40, right: 40, top: 20, bottom: -20, near: 1, far: 120 });
+  Object.assign(sun.shadow.camera, { left: -52, right: 52, top: 26, bottom: -26, near: 1, far: 140 });
   sun.shadow.bias = -0.0005;
   scene.add(sun);
   const rim = new THREE.DirectionalLight('#ffffff', 0.6);

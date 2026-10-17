@@ -42,7 +42,7 @@ export const STYLES = {
     pro: true,
     theme: 'grove',
     create: createForest,
-    camera: { dir: [-18, 28, 52], dist: 60 },
+    camera: { dir: [-42, 26, 40], dist: 58, halfWidth: 30 }, // diagonal, looking into the forest
     lights: { hemi: ['#ffffff', '#86b85a', 1.5], sun: ['#fff1d6', 2.2], rim: ['#ffd36b', 0.4] },
   },
   heartbeat: {
