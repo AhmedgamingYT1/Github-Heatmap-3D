@@ -38,11 +38,6 @@ export function createHeatmap(container, initialOptions = {}) {
   Object.assign(renderer.domElement.style, fill);
   container.appendChild(renderer.domElement);
 
-  // 2D styles (Heartbeat) draw here instead
-  const canvas2d = document.createElement('canvas');
-  Object.assign(canvas2d.style, fill);
-  canvas2d.style.display = 'none';
-  container.appendChild(canvas2d);
 
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog('#000', 90, 180);
@@ -136,7 +131,7 @@ export function createHeatmap(container, initialOptions = {}) {
   }
 
   function useBloom() {
-    return Boolean(styleDef.bloom) && !opts.transparent && !styleDef.is2d;
+    return Boolean(styleDef.bloom) && !opts.transparent;
   }
 
   function ensureComposer() {
@@ -153,17 +148,14 @@ export function createHeatmap(container, initialOptions = {}) {
   }
 
   function applyLiveOptions() {
-    const is2d = Boolean(styleDef.is2d);
     controls.autoRotate = opts.autoRotate;
     controls.autoRotateSpeed = opts.rotateSpeed;
-    controls.enabled = opts.interactive && !is2d;
+    controls.enabled = opts.interactive;
     controls.enableZoom = opts.zoom;
     const shadows = opts.shadows && styleDef.shadows !== false;
     sun.castShadow = shadows;
     style?.setShadows?.(shadows);
-    renderer.domElement.style.display = is2d ? 'none' : 'block';
-    canvas2d.style.display = is2d ? 'block' : 'none';
-    (is2d ? canvas2d : renderer.domElement).style.cursor = opts.interactive && !is2d ? 'grab' : 'default';
+    renderer.domElement.style.cursor = opts.interactive ? 'grab' : 'default';
     ensureComposer();
     applyBackground();
   }
@@ -197,7 +189,6 @@ export function createHeatmap(container, initialOptions = {}) {
       cancelled: () => token !== buildToken,
       board,
       renderer,
-      canvas: canvas2d,
       theme,
       days,
       prevHeights,
@@ -264,10 +255,8 @@ export function createHeatmap(container, initialOptions = {}) {
     pointerInside = true;
   };
   const onPointerLeave = () => (pointerInside = false);
-  for (const el of [renderer.domElement, canvas2d]) {
-    el.addEventListener('pointermove', onPointerMove);
-    el.addEventListener('pointerleave', onPointerLeave);
-  }
+  renderer.domElement.addEventListener('pointermove', onPointerMove);
+  renderer.domElement.addEventListener('pointerleave', onPointerLeave);
 
   function setHovered(i) {
     if (i === hovered) return;
@@ -281,12 +270,8 @@ export function createHeatmap(container, initialOptions = {}) {
       tooltip.style.display = 'none';
       return;
     }
-    let i = -1;
-    if (style.is2d) i = style.pickPx(pointerPx.x, pointerPx.y);
-    else {
-      raycaster.setFromCamera(pointer, camera);
-      i = style.pick(raycaster);
-    }
+    raycaster.setFromCamera(pointer, camera);
+    const i = style.pick(raycaster);
     setHovered(i);
     if (i < 0) {
       tooltip.style.display = 'none';
@@ -320,10 +305,6 @@ export function createHeatmap(container, initialOptions = {}) {
   // ---------- loop ----------
   renderer.setAnimationLoop((now) => {
     style?.update(now);
-    if (styleDef.is2d) {
-      updateHover();
-      return; // the style drew itself
-    }
     controls.update();
     // fog only softens the far edge of the board, however far away the camera is
     const dist = camera.position.length();
@@ -400,7 +381,6 @@ export function createHeatmap(container, initialOptions = {}) {
       composer?.dispose();
       renderer.dispose();
       renderer.domElement.remove();
-      canvas2d.remove();
       tooltip.remove();
     },
   };

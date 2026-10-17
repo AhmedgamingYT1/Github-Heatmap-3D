@@ -6,7 +6,7 @@ const thisYear = new Date().getFullYear();
 export const OPTIONS = {
   user: { type: 'string', default: '' },
   year: { type: 'number', default: thisYear, min: 2008, max: thisYear },
-  style: { type: 'string', default: 'city' }, // city, night, galaxy, forest, heartbeat
+  style: { type: 'string', default: 'city' }, // city, night, galaxy, forest
   theme: { type: 'string', default: 'sand' }, // colors for the City style
   palette: { type: 'string', default: 'spring' }, // leaf colors for the Forest style
   music: { type: 'bool', default: false }, // show a "play your year" button on embeds

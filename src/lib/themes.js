@@ -116,17 +116,6 @@ export const THEMES = {
     accent: '#4c7a34',
     levels: ['#a9cf7f', '#8cc66b', '#3f8a2e', '#f7b6d2', '#e0559a'], // grass, then canopy colors by level
   },
-  monitor: {
-    name: 'Heartbeat',
-    hidden: true,
-    dark: true,
-    background: '#03120b',
-    plinth: '#0a2a1a',
-    text: '#c8ffe0',
-    label: '#5fbf8a',
-    accent: '#39ff88',
-    levels: ['#0f3a24', '#1a6b3e', '#25a35c', '#30d977', '#9dffc4'],
-  },
 };
 
 export const DEFAULT_THEME = 'sand';

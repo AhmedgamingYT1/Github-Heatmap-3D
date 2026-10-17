@@ -12,7 +12,6 @@ Every day is a bar whose height matches that day's contribution count.
 | **Night City** (Pro) | A city block for every day, after dark: apartments, office blocks and glass towers with spires, as tall as the day's contributions, with lit window grids, street lamps, moving car lights and parks on empty days. |
 | **Galaxy** (Pro) | A realistic four-armed spiral galaxy (≈90k particles, dust lanes, nebulae, twinkling starfield) from January at the core to December at the rim. Every day is a star colored like a real one, from red dwarf to blue giant; the twelve biggest days are planets (gas giants, rocky, ocean and ice worlds, the top three ringed). |
 | **Forest** (Pro) | An island with a realistic tree for every day: oak, ash, aspen and pine, as tall as the day's contributions, with bushes for quiet days. Four leaf palettes: Spring (greens with pink blossoms on the busiest days), Autumn, Sakura and Dream. |
-| **Heartbeat** (Pro) | A heart monitor sweeping through the year, one beat per day. |
 
 ## Your year as a song (Pro)
 
@@ -67,7 +66,7 @@ The same names work as URL params (`?autoRotate=0`), script attributes (`data-au
 |---|---|---|
 | `user` | – | GitHub username (sample data when empty) |
 | `year` | current year | 2008 to now |
-| `style` | `city` | `city`, `night`, `galaxy`, `forest`, `heartbeat` |
+| `style` | `city` | `city`, `night`, `galaxy`, `forest` |
 | `palette` | `spring` | Forest leaf colors: `spring`, `autumn`, `sakura`, `dream` |
 | `theme` | `sand` | City colors: `sand`, `ocean`, `github`, `github-light`, `sunset`, `forest`, `neon`, `halloween` |
 | `height` | `8` | Height of the tallest bar (2–20) |
@@ -110,7 +109,7 @@ embed.html, src/embed.js    bare 3D view for iframes
 public/embed.js             script-tag loader (creates the iframe)
 api/heatmap.js              README image endpoint (SVG)
 src/lib/heatmap.js          the 3D component: createHeatmap(element, options)
-src/lib/styles/             City / Night City, Galaxy, Forest, Heartbeat
+src/lib/styles/             City, Night City, Galaxy, Forest
 src/lib/song.js             song composer, player and WAV export
 src/lib/svg.js              3D-style SVG renderer for images
 src/lib/options.js          every option, its default and URL format
