@@ -6,8 +6,9 @@
 import * as THREE from 'three';
 import { BASE_H, hash, gridLayout, maxCount, addGridLabels, plinthMesh, shadowGround, easeOut } from './common.js';
 
-const SPACING = 1.8; // distance between trees (the City uses 1)
-const BUSH_HEIGHT = 1.1; // days shorter than this grow a bush instead of a tree
+const SPACING = 1.25; // distance between trees (the City uses 1)
+const BUSH_HEIGHT = 0.75; // days shorter than this (at default size) grow a bush instead of a tree
+const TILE = 0.92; // grid tile size, as a fraction of the spacing
 
 // levels[0] is the grass, levels[1..4] the leaf color per GitHub level.
 export const FOREST_PALETTES = {
@@ -63,6 +64,22 @@ export async function createForest(ctx) {
   const evergreen = new THREE.Color(palette.evergreen);
   const white = new THREE.Color('#ffffff');
 
+  // GitHub-style grid: a tile under every day, tinted toward that day's leaf color
+  const grassColor = new THREE.Color(palette.levels[0]);
+  const tiles = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(SPACING * TILE, 0.04, SPACING * TILE).translate(0, 0.02, 0),
+    new THREE.MeshStandardMaterial({ roughness: 1 }),
+    cells.length,
+  );
+  tiles.receiveShadow = true;
+  const tileMatrix = new THREE.Matrix4();
+  cells.forEach((c, k) => {
+    tiles.setMatrixAt(k, tileMatrix.makeTranslation(c.x, 0, c.z));
+    const level = c.day.level;
+    tiles.setColorAt(k, level ? grassColor.clone().lerp(leafColors[level], 0.35) : grassColor.clone().multiplyScalar(0.86));
+  });
+  board.add(tiles);
+
   let meshes = []; // { branches, leaves, entries }
   let proxy = null; // invisible cylinders, one per plant, for fast hover picking
   let proxyDays = [];
@@ -90,19 +107,20 @@ export async function createForest(ctx) {
       if (count === 0) return;
       const h = (n) => hash(c.i * 13 + n);
       const s = norm(count);
-      const height = 0.45 + s * opts.height * 0.95;
+      // The Height slider scales whole trees (8 = default size); counts set each tree's size.
+      const size = opts.height / 8;
+      const height = (0.35 + s * 2.9) * size;
 
       let species;
-      if (height < BUSH_HEIGHT) species = 'bush';
+      if (height < BUSH_HEIGHT * size) species = 'bush';
       else if (level >= 3) species = h(7) < 0.6 ? 'oak' : 'ash'; // blossoms on broad-leaf trees
       else species = ['oak', 'ash', 'aspen', 'pine'][Math.floor(h(7) * 4)];
       const variants = library.protos[species];
       const proto = variants[Math.floor(h(8) * variants.length)];
 
-      // scale the model to the day's height; cap the width so neighbours keep some air
+      // scale the model evenly to the day's height, so trees grow instead of stretching
       const sy = height / proto.height;
-      const maxWidth = Math.min(3.2, 1 + height * 0.45);
-      const sxz = Math.min(sy, maxWidth / proto.width);
+      const sxz = sy;
       const base = leafColors[Math.max(1, level)];
       const color = (species === 'pine' ? base.clone().lerp(evergreen, 0.55) : base.clone()).multiplyScalar(0.9 + h(9) * 0.2);
 
