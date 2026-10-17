@@ -3,10 +3,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { fetchContributions, sampleContributions, computeStats } from './data.js';
+import { THEMES, DEFAULT_THEME, getTheme, applyThemeToPage } from './themes.js';
 
-// GitHub dark-theme contribution colors, level 0..4
-const LEVEL_COLORS = ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'].map((c) => new THREE.Color(c));
-const HOVER_COLOR = new THREE.Color('#ffffff');
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const CELL = 1; // grid spacing
@@ -26,8 +24,8 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 $('app').appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#0d1117');
-scene.fog = new THREE.Fog('#0d1117', 90, 180);
+scene.background = new THREE.Color();
+scene.fog = new THREE.Fog('#000', 90, 180);
 
 const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 500);
 const DEFAULT_CAM = new THREE.Vector3(-18, 32, 52);
@@ -42,7 +40,8 @@ controls.minDistance = 10;
 controls.maxDistance = 140;
 controls.maxPolarAngle = Math.PI; // allow looking from underneath too — full 360°
 
-scene.add(new THREE.HemisphereLight('#c9d1d9', '#0d1117', 1.1));
+const hemi = new THREE.HemisphereLight('#ffffff', '#000000', 1.1);
+scene.add(hemi);
 const sun = new THREE.DirectionalLight('#ffffff', 2.2);
 sun.position.set(-20, 40, 25);
 sun.castShadow = true;
@@ -50,7 +49,7 @@ sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -40, right: 40, top: 20, bottom: -20, near: 1, far: 120 });
 sun.shadow.bias = -0.0005;
 scene.add(sun);
-const rim = new THREE.DirectionalLight('#39d353', 0.6);
+const rim = new THREE.DirectionalLight('#ffffff', 0.6);
 rim.position.set(25, 10, -30);
 scene.add(rim);
 
@@ -67,9 +66,13 @@ let target = new Float32Array(0);
 let animStart = 0;
 let hovered = -1;
 let label = { user: '', year: 0 };
+let themeId = DEFAULT_THEME;
+let theme = THEMES[themeId];
+let levelColors = [];
+let hoverColor = new THREE.Color();
 
 // ---------- text helper ----------
-function textPlane(text, { size = 1, color = '#8b949e', weight = 500, align = 'center' } = {}) {
+function textPlane(text, { size = 1, color = theme.label, weight = 500, align = 'center' } = {}) {
   const px = 96;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -118,6 +121,7 @@ function disposeBoard() {
 }
 
 function buildBoard(data, user, year) {
+  const prevHeights = data === days ? current : null; // theme change: keep bars where they are
   disposeBoard();
   days = data;
   cells = layout(days);
@@ -142,7 +146,7 @@ function buildBoard(data, user, year) {
   plinthGeo.translate(0, -BASE_H / 2, (padFront - padBack) / 2);
   const plinth = new THREE.Mesh(
     plinthGeo,
-    new THREE.MeshStandardMaterial({ color: '#161b22', roughness: 0.6, metalness: 0.2 }),
+    new THREE.MeshStandardMaterial({ color: theme.plinth, roughness: 0.6, metalness: theme.dark ? 0.2 : 0 }),
   );
   plinth.receiveShadow = true;
   plinth.castShadow = true;
@@ -157,13 +161,20 @@ function buildBoard(data, user, year) {
   bars.castShadow = true;
   bars.receiveShadow = true;
   bars.frustumCulled = false;
-  cells.forEach((c, i) => bars.setColorAt(i, LEVEL_COLORS[c.day.level]));
+  cells.forEach((c, i) => bars.setColorAt(i, levelColors[c.day.level]));
   board.add(bars);
 
-  current = new Float32Array(cells.length); // start flat → grow-in animation
   target = new Float32Array(cells.length);
   computeTargets();
-  animStart = performance.now();
+  if (prevHeights?.length === cells.length) {
+    current = prevHeights;
+    current.set(target); // jump straight to final heights, no grow-in
+    animStart = -Infinity;
+    writeAllMatrices();
+  } else {
+    current = new Float32Array(cells.length); // start flat → grow-in animation
+    animStart = performance.now();
+  }
 
   // month labels along the back edge (like the top row on GitHub)
   let lastMonth = -1;
@@ -187,13 +198,13 @@ function buildBoard(data, user, year) {
   });
 
   // name + year on the front of the plinth top
-  const title = textPlane(`${user || 'sample'}  ·  ${year}`, { size: 1.4, color: '#e6edf3', weight: 600, align: 'left' });
+  const title = textPlane(`${user || 'sample'}  ·  ${year}`, { size: 1.4, color: theme.text, weight: 600, align: 'left' });
   title.rotation.x = -Math.PI / 2;
   title.position.set(x0 - BAR / 2, 0.01, z0 + 7 * CELL + 1.0);
   board.add(title);
 
   // ground shadow catcher
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShadowMaterial({ opacity: 0.35 }));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShadowMaterial({ opacity: theme.dark ? 0.35 : 0.15 }));
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -BASE_H - 0.01;
   ground.receiveShadow = true;
@@ -217,6 +228,15 @@ const tmpMatrix = new THREE.Matrix4();
 const tmpPos = new THREE.Vector3();
 const tmpQuat = new THREE.Quaternion();
 const tmpScale = new THREE.Vector3();
+
+function writeAllMatrices() {
+  cells.forEach((c, i) => {
+    tmpPos.set(c.x, 0, c.z);
+    tmpScale.set(1, Math.max(current[i], 0.0001), 1);
+    bars.setMatrixAt(i, tmpMatrix.compose(tmpPos, tmpQuat, tmpScale));
+  });
+  bars.instanceMatrix.needsUpdate = true;
+}
 
 function animateBars(now) {
   if (!bars) return;
@@ -276,9 +296,9 @@ renderer.domElement.addEventListener('pointerleave', () => {
 
 function setHovered(i) {
   if (i === hovered) return;
-  if (hovered >= 0) bars.setColorAt(hovered, LEVEL_COLORS[cells[hovered].day.level]);
+  if (hovered >= 0) bars.setColorAt(hovered, levelColors[cells[hovered].day.level]);
   hovered = i;
-  if (i >= 0) bars.setColorAt(i, HOVER_COLOR);
+  if (i >= 0) bars.setColorAt(i, hoverColor);
   bars.instanceColor.needsUpdate = true;
 }
 
@@ -335,6 +355,49 @@ function exportSTL() {
   box.dispose();
 }
 
+// ---------- themes ----------
+function setTheme(id) {
+  themeId = getTheme(id);
+  theme = THEMES[themeId];
+  levelColors = theme.levels.map((c) => new THREE.Color(c));
+  hoverColor = new THREE.Color(theme.dark ? '#ffffff' : theme.text);
+
+  applyThemeToPage(theme);
+  scene.background.set(theme.background);
+  scene.fog.color.set(theme.background);
+  hemi.color.set(theme.dark ? '#c9d1d9' : '#ffffff');
+  hemi.groundColor.set(theme.dark ? theme.background : theme.plinth);
+  hemi.intensity = theme.dark ? 1.1 : 1.6;
+  sun.intensity = theme.dark ? 2.2 : 1.8;
+  rim.color.set(theme.accent);
+
+  $('legend').replaceChildren(
+    ...theme.levels.map((c) => Object.assign(document.createElement('i'), { style: `background:${c}` })),
+  );
+  for (const b of $('themes').children) b.setAttribute('aria-pressed', b.dataset.theme === themeId);
+
+  if (days.length) buildBoard(days, label.user, label.year);
+
+  const url = new URL(location.href);
+  url.searchParams.set('theme', themeId);
+  history.replaceState(null, '', url);
+  try {
+    localStorage.setItem('theme', themeId);
+  } catch {}
+}
+
+for (const [id, t] of Object.entries(THEMES)) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.dataset.theme = id;
+  b.title = t.name;
+  b.setAttribute('aria-label', t.name);
+  b.style.setProperty('--a', t.background);
+  b.style.setProperty('--b', t.levels[3]);
+  b.addEventListener('click', () => setTheme(id));
+  $('themes').appendChild(b);
+}
+
 // ---------- UI ----------
 const yearSelect = $('year');
 const thisYear = new Date().getFullYear();
@@ -388,6 +451,11 @@ addEventListener('resize', () => {
 const params = new URLSearchParams(location.search);
 const initialUser = params.get('user') || '';
 const initialYear = Number(params.get('year')) || thisYear;
+let savedTheme = null;
+try {
+  savedTheme = localStorage.getItem('theme');
+} catch {}
+setTheme(params.get('theme') || savedTheme || DEFAULT_THEME);
 $('username').value = initialUser;
 yearSelect.value = initialYear;
 load(initialUser, initialYear);
