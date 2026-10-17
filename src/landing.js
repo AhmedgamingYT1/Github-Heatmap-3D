@@ -18,6 +18,21 @@ const $ = (id) => document.getElementById(id);
 
 // Styles with glow need an opaque canvas; the others float on the page.
 const GLOWS = new Set(['night', 'galaxy']);
+const PAGE_DARK = '#08080a'; // = --bg in dark mode, so the scene has no visible edge
+const isLight = () => document.documentElement.dataset.mode === 'light';
+
+// How the hero shows a style in the current mode. Forests grow bigger here, on a log
+// scale, so even quiet days become real trees and it reads as a full forest.
+function heroOptions(style) {
+  const glow = GLOWS.has(style);
+  return {
+    style,
+    transparent: !glow,
+    background: glow && !isLight() ? PAGE_DARK : undefined,
+    height: style === 'forest' ? 15 : 8,
+    log: style === 'forest',
+  };
+}
 const daysPromise = fetchContributions(HERO_USER, YEAR).catch(() => sampleContributions(YEAR));
 
 // Vertical swipes scroll the page on phones; horizontal drags still spin the model.
@@ -35,9 +50,8 @@ $('heroWho').textContent = `@${HERO_USER}…`;
 const hero = createHeatmap($('heroStage'), {
   user: HERO_USER,
   year: YEAR,
-  style: heroStyle,
   theme: 'sand',
-  transparent: !GLOWS.has(heroStyle),
+  ...heroOptions(heroStyle),
   zoom: false,
   rotateSpeed: 0.45,
   maxPixelRatio: 1.5,
@@ -64,9 +78,27 @@ seg.addEventListener('click', (e) => {
   heroStyle = b.dataset.style;
   for (const x of seg.querySelectorAll('button')) x.setAttribute('aria-checked', x === b);
   moveGlider();
-  hero.setOptions({ style: heroStyle, transparent: !GLOWS.has(heroStyle) });
+  applyHero();
   $('navStudio').href = studioUrl({ style: heroStyle });
 });
+
+function applyHero() {
+  hero.setOptions(heroOptions(heroStyle));
+  // light page + night-time world: present it on a dark screen
+  $('heroStage').toggleAttribute('data-card', isLight() && GLOWS.has(heroStyle));
+}
+
+// ---------- light / dark ----------
+$('modeToggle').addEventListener('click', () => {
+  const mode = isLight() ? 'dark' : 'light';
+  document.documentElement.dataset.mode = mode;
+  try {
+    localStorage.setItem('mode', mode);
+  } catch {}
+  applyHero();
+  daysPromise.then(renderFeatureArt);
+});
+$('heroStage').toggleAttribute('data-card', isLight() && GLOWS.has(heroStyle));
 addEventListener('resize', moveGlider);
 document.fonts?.ready.then(moveGlider);
 moveGlider();
@@ -80,8 +112,8 @@ $('tryForm').addEventListener('submit', (e) => {
 const WORLDS = {
   night: { title: 'Night City', kicker: 'Pro · 3D', opts: { style: 'night' } },
   galaxy: { title: 'Galaxy', kicker: 'Pro · 3D', opts: { style: 'galaxy' } },
-  forest: { title: 'Forest', kicker: 'Pro · 3D', opts: { style: 'forest', palette: 'spring' } },
-  sakura: { title: 'Forest · Sakura', kicker: 'Pro · 3D', opts: { style: 'forest', palette: 'sakura' } },
+  forest: { title: 'Forest', kicker: 'Pro · 3D', opts: { style: 'forest', palette: 'spring', height: 15, log: true } },
+  sakura: { title: 'Forest · Sakura', kicker: 'Pro · 3D', opts: { style: 'forest', palette: 'sakura', height: 15, log: true } },
   city: { title: 'City', kicker: 'Free · 3D', opts: { style: 'city', theme: 'sand' } },
 };
 
@@ -103,7 +135,7 @@ function openViewer(key) {
       $('viewerHint').hidden = false;
     });
   } else {
-    viewerMap.setOptions({ palette: 'spring', theme: 'sand', ...w.opts });
+    viewerMap.setOptions({ palette: 'spring', theme: 'sand', height: 8, log: false, ...w.opts });
     $('viewerHint').hidden = w.opts.style !== 'forest';
   }
 }
@@ -149,10 +181,12 @@ function toggleSong() {
 }
 
 // ---------- features ----------
-daysPromise.then((days) => {
-  $('cardArt').innerHTML = renderChartSvg('card', days, { user: HERO_USER, theme: 'halloween' });
-  $('donutArt').innerHTML = renderChartSvg('donut', days, { user: HERO_USER, theme: 'halloween' });
-});
+function renderFeatureArt(days) {
+  const theme = isLight() ? 'sand' : 'halloween';
+  $('cardArt').innerHTML = renderChartSvg('card', days, { user: HERO_USER, theme });
+  $('donutArt').innerHTML = renderChartSvg('donut', days, { user: HERO_USER, theme });
+}
+daysPromise.then(renderFeatureArt);
 
 const embed = `<iframe src="${location.origin}/embed.html?user=you&style=galaxy"\n  style="width:100%;height:420px;border:0"></iframe>`;
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
