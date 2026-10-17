@@ -13,6 +13,10 @@ Every day is a bar whose height matches that day's contribution count.
 | **Galaxy** (Pro) | A realistic four-armed spiral galaxy (≈90k particles, dust lanes, nebulae, twinkling starfield) from January at the core to December at the rim. Every day is a star colored like a real one, from red dwarf to blue giant; the twelve biggest days are planets (gas giants, rocky, ocean and ice worlds, the top three ringed). |
 | **Forest** (Pro) | An island with a realistic tree for every day: oak, ash, aspen and pine, as tall as the day's contributions, with bushes for quiet days. Four leaf palettes: Spring (greens with pink blossoms on the busiest days), Autumn, Sakura and Dream. |
 
+## 2D designs
+
+Prefer flat? The same year as clean cards that work as GitHub README images and follow the color theme: **Stats card**, **Weekly rhythm** (donut chart), **Monthly bars** and the **Classic grid**. Use `type=card|donut|months|calendar` on the image API.
+
 ## Your year as a song (Pro)
 
 Every profile gets its own song, composed from its contributions. The key, scale and chords come from the username, the tempo from how much was shipped, and every day is one note: busy days play melody and drums, quiet stretches drift into soft pads. Play it on the site while the 3D view follows along, or download it as a WAV file.
@@ -28,7 +32,7 @@ Every profile gets its own song, composed from its contributions. The key, scale
 
 ## Use it
 
-Open the site, enter your username, then click **Customize & Embed**. Adjust the settings, rotate the model to the angle you like and click **Save this view**. Then copy the code for:
+The site has a landing page (`/`) that shows everything off, and the **Studio** (`/studio.html`) where you make your own. In the Studio, enter your username, then click **Customize & Embed**. Adjust the settings, rotate the model to the angle you like and click **Save this view**. Then copy the code for:
 
 | Where | What you get |
 |---|---|
@@ -85,6 +89,7 @@ The same names work as URL params (`?autoRotate=0`), script attributes (`data-au
 | `camera` | – | Starting camera position `x,y,z` (set by **Save this view**) |
 | `badge` | `1` | Small "Open in 3D" link on embeds |
 | `music` | `0` | "Play your year" song button on embeds |
+| `type` | `3d` | Image only: `3d`, or a 2D design: `card`, `donut`, `months`, `calendar` |
 | `angle` | `-20` | Image only: view angle around the board, in degrees |
 | `tilt` | `30` | Image only: view angle above the board, 5–85 degrees |
 
@@ -95,7 +100,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The README image API runs at `/api/heatmap` in dev too.
+Open `http://localhost:5173` for the landing page or `/studio.html` for the Studio. The README image API runs at `/api/heatmap` in dev too.
 
 ## Deploy
 
@@ -104,7 +109,8 @@ Built for [Vercel](https://vercel.com): import the repo and deploy. The static s
 ## Project layout
 
 ```
-index.html, src/main.js     the site: editor + embed code generator
+index.html, src/landing.*   landing page: hero, style showcase, song, designs, pricing
+studio.html, src/main.js    the Studio: editor + embed code generator
 embed.html, src/embed.js    bare 3D view for iframes
 public/embed.js             script-tag loader (creates the iframe)
 api/heatmap.js              README image endpoint (SVG)
@@ -112,6 +118,7 @@ src/lib/heatmap.js          the 3D component: createHeatmap(element, options)
 src/lib/styles/             City, Night City, Galaxy, Forest
 src/lib/song.js             song composer, player and WAV export
 src/lib/svg.js              3D-style SVG renderer for images
+src/lib/charts.js           2D designs: stats card, donut, monthly bars, classic grid
 src/lib/options.js          every option, its default and URL format
 src/lib/themes.js           color themes
 src/lib/data.js             contribution data + stats
