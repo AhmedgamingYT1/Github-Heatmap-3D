@@ -3,6 +3,7 @@
 //   camera: default view direction and distance
 //   bloom:  glow post-processing, for styles with lights in them
 import { createCity } from './city.js';
+import { createNightCity } from './nightcity.js';
 import { createGalaxy } from './galaxy.js';
 import { createForest, FOREST_PALETTES } from './forest.js';
 import { createHeartbeat } from './heartbeat.js';
@@ -20,9 +21,10 @@ export const STYLES = {
     name: 'Night City',
     pro: true,
     theme: 'night',
-    create: (ctx) => createCity(ctx, { night: true }),
-    camera: { dir: [-18, 22, 52], dist: 60 },
-    bloom: { strength: 0.9, radius: 0.5, threshold: 0.6 },
+    create: createNightCity,
+    camera: { dir: [-42, 20, 40], dist: 50, halfWidth: 26 }, // diagonal, down the avenues
+    bloom: { strength: 0.85, radius: 0.45, threshold: 0.55 },
+    shadows: false,
     lights: { hemi: ['#8aa0ff', '#070b1a', 0.7], sun: ['#9fb4ff', 0.9], rim: ['#5f7bff', 0.5] },
     stl: true,
   },

@@ -92,7 +92,7 @@ export const THEMES = {
     text: '#e8ecff',
     label: '#7d89b3',
     accent: '#ffd66b',
-    levels: ['#161d36', '#2e3f70', '#3a5190', '#4663ad', '#5677cc'],
+    levels: ['#1e2433', '#ffc56b', '#ffe2a6', '#d6ecff', '#8fdcff'], // empty block, then window light by level
   },
   galaxy: {
     name: 'Galaxy',
