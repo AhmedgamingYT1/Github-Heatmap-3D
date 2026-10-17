@@ -1,0 +1,61 @@
+// Every visual style the heatmap can render, and how the scene around it is set up.
+//   theme:  built-in colors (null = the user's theme picker applies)
+//   camera: default view direction and distance
+//   bloom:  glow post-processing, for styles with lights in them
+import { createCity } from './city.js';
+import { createGalaxy } from './galaxy.js';
+import { createForest } from './forest.js';
+import { createHeartbeat } from './heartbeat.js';
+
+export const STYLES = {
+  city: {
+    name: 'City',
+    pro: false,
+    theme: null,
+    create: (ctx) => createCity(ctx),
+    camera: { dir: [-18, 32, 52], dist: 64 },
+    stl: true,
+  },
+  night: {
+    name: 'Night City',
+    pro: true,
+    theme: 'night',
+    create: (ctx) => createCity(ctx, { night: true }),
+    camera: { dir: [-18, 22, 52], dist: 60 },
+    bloom: { strength: 0.9, radius: 0.5, threshold: 0.6 },
+    lights: { hemi: ['#8aa0ff', '#070b1a', 0.7], sun: ['#9fb4ff', 0.9], rim: ['#5f7bff', 0.5] },
+    stl: true,
+  },
+  galaxy: {
+    name: 'Galaxy',
+    pro: true,
+    theme: 'galaxy',
+    create: createGalaxy,
+    camera: { dir: [0, 34, 42], dist: 80, halfWidth: 44 },
+    bloom: { strength: 0.75, radius: 0.55, threshold: 0.3 },
+    lights: { hemi: ['#ffffff', '#05030d', 0.5], sun: ['#ffd9a8', 1.1], rim: ['#b58cff', 0.5] },
+    fog: false,
+    shadows: false,
+  },
+  forest: {
+    name: 'Forest',
+    pro: true,
+    theme: 'grove',
+    create: createForest,
+    camera: { dir: [-18, 28, 52], dist: 60 },
+    lights: { hemi: ['#ffffff', '#86b85a', 1.5], sun: ['#fff1d6', 2.2], rim: ['#ffd36b', 0.4] },
+  },
+  heartbeat: {
+    name: 'Heartbeat',
+    pro: true,
+    theme: 'monitor',
+    create: createHeartbeat,
+    is2d: true,
+  },
+};
+
+export const DEFAULT_STYLE = 'city';
+
+export function getStyle(id) {
+  return STYLES[id] ? id : DEFAULT_STYLE;
+}

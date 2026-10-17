@@ -1,32 +1,30 @@
-// The 3D contribution heatmap as a reusable component.
+// The contribution heatmap as a reusable component.
 //
-//   const map = createHeatmap(element, { user: 'octocat', theme: 'ocean' });
+//   const map = createHeatmap(element, { user: 'octocat', style: 'galaxy' });
 //   map.setOptions({ autoRotate: false });
 //
 // Used by the main site, the iframe embed page and anything else that wants it.
+// The look itself lives in ./styles — this file is the stage they perform on.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { fetchContributions, sampleContributions } from './data.js';
 import { THEMES, getTheme } from './themes.js';
 import { defaults } from './options.js';
+import { STYLES, getStyle } from './styles/index.js';
+import { glowTex } from './styles/common.js';
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-const CELL = 1; // grid spacing
-const MIN_H = 0.08; // height of an empty day
-const BASE_H = 0.6; // plinth thickness
-const VIEW_DIR = new THREE.Vector3(-18, 32, 52).normalize(); // default camera direction
-const VIEW_DIST = 64; // default camera distance on a typical landscape screen
-
-// Options that need the board rebuilt vs. ones that just change bar heights.
-const REBUILD_KEYS = ['theme', 'barSize', 'base', 'labels', 'title'];
-const HEIGHT_KEYS = ['height', 'log'];
+// Options that need the scene rebuilt vs. ones a style can apply in place.
+const REBUILD_KEYS = ['style', 'theme', 'barSize', 'base', 'labels', 'title'];
+const IN_PLACE_KEYS = ['height', 'log'];
 
 export function createHeatmap(container, initialOptions = {}) {
   let opts = { ...defaults(), ...initialOptions };
-  let theme = THEMES[getTheme(opts.theme)];
+  let styleDef = STYLES[getStyle(opts.style)];
+  let theme = currentTheme();
 
   if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
 
@@ -36,18 +34,25 @@ export function createHeatmap(container, initialOptions = {}) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  Object.assign(renderer.domElement.style, { display: 'block', width: '100%', height: '100%', touchAction: 'none' });
+  const fill = { position: 'absolute', inset: '0', display: 'block', width: '100%', height: '100%', touchAction: 'none' };
+  Object.assign(renderer.domElement.style, fill);
   container.appendChild(renderer.domElement);
+
+  // 2D styles (Heartbeat) draw here instead
+  const canvas2d = document.createElement('canvas');
+  Object.assign(canvas2d.style, fill);
+  canvas2d.style.display = 'none';
+  container.appendChild(canvas2d);
 
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog('#000', 90, 180);
 
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 500);
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 600);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.minDistance = 10;
+  controls.minDistance = 8;
   controls.maxDistance = 200;
   controls.maxPolarAngle = Math.PI; // allow looking from underneath too — full 360°
 
@@ -63,9 +68,21 @@ export function createHeatmap(container, initialOptions = {}) {
   rim.position.set(25, 10, -30);
   scene.add(rim);
 
-  // Everything that depends on the data lives in this group so it can be rebuilt.
+  // Everything a style builds lives in this group so it can be rebuilt.
   const board = new THREE.Group();
   scene.add(board);
+
+  // "Now playing" marker that follows the song
+  const marker = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: glowTex(), color: '#ffffff', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
+  );
+  marker.scale.set(2.4, 2.4, 1);
+  marker.visible = false;
+  scene.add(marker);
+
+  // Glow post-processing, created the first time a style asks for it
+  let composer = null;
+  let bloomPass = null;
 
   const tooltip = document.createElement('div');
   Object.assign(tooltip.style, {
@@ -85,61 +102,30 @@ export function createHeatmap(container, initialOptions = {}) {
 
   // ---------- state ----------
   let days = [];
-  let cells = []; // { day, col, row, x, z }
-  let bars = null; // InstancedMesh
-  let plinth = null;
-  let ground = null;
-  let current = new Float32Array(0); // animated heights
-  let target = new Float32Array(0);
-  let animStart = 0;
+  let style = null; // the built style instance
   let hovered = -1;
-  let levelColors = [];
-  let hoverColor = new THREE.Color();
+  let highlighted = -1;
   let loadToken = 0;
+  let size = { w: 1, h: 1 };
   const listeners = {};
-
   const emit = (name, data) => listeners[name]?.forEach((fn) => fn(data));
 
-  // ---------- text helper ----------
-  function textPlane(text, { size = 1, color = theme.label, weight = 500, align = 'center' } = {}) {
-    const px = 96;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const font = `${weight} ${px}px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif`;
-    ctx.font = font;
-    canvas.width = Math.ceil(ctx.measureText(text).width) + 16;
-    canvas.height = px * 1.3;
-    ctx.font = font;
-    ctx.fillStyle = color;
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = align === 'left' ? 'left' : align === 'right' ? 'right' : 'center';
-    const x = align === 'left' ? 8 : align === 'right' ? canvas.width - 8 : canvas.width / 2;
-    ctx.fillText(text, x, canvas.height / 2);
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    const h = size;
-    const w = (canvas.width / canvas.height) * h;
-    const geo = new THREE.PlaneGeometry(w, h);
-    // shift so the plane's origin matches the text alignment
-    if (align === 'left') geo.translate(w / 2, 0, 0);
-    if (align === 'right') geo.translate(-w / 2, 0, 0);
-    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
-    mesh.rotation.x = -Math.PI / 2; // lie flat on the plinth
-    return mesh;
+  function currentTheme() {
+    return THEMES[styleDef.theme || getTheme(opts.theme)];
   }
 
   // ---------- theme / lighting ----------
   function applyTheme() {
-    theme = THEMES[getTheme(opts.theme)];
-    levelColors = theme.levels.map((c) => new THREE.Color(c));
-    hoverColor = new THREE.Color(theme.dark ? '#ffffff' : theme.text);
-    hemi.color.set(theme.dark ? '#c9d1d9' : '#ffffff');
-    hemi.groundColor.set(theme.dark ? theme.background : theme.plinth);
-    hemi.intensity = theme.dark ? 1.1 : 1.6;
-    sun.intensity = theme.dark ? 2.2 : 1.8;
-    rim.color.set(theme.accent);
+    styleDef = STYLES[getStyle(opts.style)];
+    theme = currentTheme();
+    const L = styleDef.lights;
+    hemi.color.set(L ? L.hemi[0] : theme.dark ? '#c9d1d9' : '#ffffff');
+    hemi.groundColor.set(L ? L.hemi[1] : theme.dark ? theme.background : theme.plinth);
+    hemi.intensity = L ? L.hemi[2] : theme.dark ? 1.1 : 1.6;
+    sun.color.set(L ? L.sun[0] : '#ffffff');
+    sun.intensity = L ? L.sun[1] : theme.dark ? 2.2 : 1.8;
+    rim.color.set(L ? L.rim[0] : theme.accent);
+    rim.intensity = L ? L.rim[1] : 0.6;
     applyBackground();
   }
 
@@ -148,205 +134,98 @@ export function createHeatmap(container, initialOptions = {}) {
     scene.fog.color.set(theme.background);
   }
 
+  function useBloom() {
+    return Boolean(styleDef.bloom) && !opts.transparent && !styleDef.is2d;
+  }
+
+  function ensureComposer() {
+    if (!useBloom()) return;
+    if (!composer) {
+      composer = new EffectComposer(renderer);
+      composer.addPass(new RenderPass(scene, camera));
+      bloomPass = new UnrealBloomPass(new THREE.Vector2(size.w, size.h), 1, 0.5, 0.6);
+      composer.addPass(bloomPass);
+      composer.addPass(new OutputPass());
+      composer.setSize(size.w, size.h);
+    }
+    Object.assign(bloomPass, styleDef.bloom);
+  }
+
   function applyLiveOptions() {
+    const is2d = Boolean(styleDef.is2d);
     controls.autoRotate = opts.autoRotate;
     controls.autoRotateSpeed = opts.rotateSpeed;
-    controls.enabled = opts.interactive;
+    controls.enabled = opts.interactive && !is2d;
     controls.enableZoom = opts.zoom;
-    sun.castShadow = opts.shadows;
-    if (bars) {
-      bars.castShadow = opts.shadows;
-      plinth.castShadow = opts.shadows;
-      ground.visible = opts.shadows;
-    }
-    renderer.domElement.style.cursor = opts.interactive ? 'grab' : 'default';
+    const shadows = opts.shadows && styleDef.shadows !== false;
+    sun.castShadow = shadows;
+    style?.setShadows?.(shadows);
+    renderer.domElement.style.display = is2d ? 'none' : 'block';
+    canvas2d.style.display = is2d ? 'block' : 'none';
+    (is2d ? canvas2d : renderer.domElement).style.cursor = opts.interactive && !is2d ? 'grab' : 'default';
+    ensureComposer();
     applyBackground();
   }
 
-  // ---------- build board ----------
-  function layout(days) {
-    // GitHub layout: columns are weeks (Sunday-start), rows are weekdays (Sun = 0 at the top).
-    const first = new Date(days[0].date + 'T00:00:00Z');
-    const offset = first.getUTCDay();
-    return days.map((day, i) => ({ day, col: Math.floor((i + offset) / 7), row: (i + offset) % 7 }));
-  }
-
+  // ---------- build ----------
   function disposeBoard() {
     board.traverse((o) => {
       o.geometry?.dispose();
-      if (o.material) {
-        o.material.map?.dispose();
-        o.material.dispose();
+      for (const m of [o.material].flat()) {
+        if (!m) continue;
+        if (m.map && m.map !== glowTex()) m.map.dispose();
+        m.dispose();
       }
     });
     board.clear();
-    bars = null;
+    style = null;
     hovered = -1;
   }
 
-  function buildBoard(keepHeights) {
-    const prevHeights = keepHeights ? current : null;
+  function build(keepHeights) {
+    const prevHeights = keepHeights ? style?.heights?.() : null;
     disposeBoard();
     if (!days.length) return;
-    cells = layout(days);
-
-    const bar = opts.barSize * CELL;
-    const cols = cells[cells.length - 1].col + 1;
-    const width = cols * CELL;
-    const depth = 7 * CELL;
-    // grid origin so the board is centered at (0,0,0)
-    const x0 = -width / 2 + CELL / 2;
-    const z0 = -depth / 2 + CELL / 2;
-    for (const c of cells) {
-      c.x = x0 + c.col * CELL;
-      c.z = z0 + c.row * CELL;
-    }
-
-    // plinth
-    const padX = 2.2;
-    const padFront = 3.2; // room for the name on top of the plinth
-    const padBack = 2.2;
-    const plinthGeo = new THREE.BoxGeometry(width + padX * 2, BASE_H, depth + padFront + padBack);
-    plinthGeo.translate(0, -BASE_H / 2, (padFront - padBack) / 2);
-    plinth = new THREE.Mesh(
-      plinthGeo,
-      new THREE.MeshStandardMaterial({ color: theme.plinth, roughness: 0.6, metalness: theme.dark ? 0.2 : 0 }),
-    );
-    plinth.receiveShadow = true;
-    plinth.visible = opts.base;
-    board.add(plinth);
-
-    // bars
-    const geo = new THREE.BoxGeometry(bar, 1, bar);
-    geo.translate(0, 0.5, 0); // base at y = 0 so scaling grows upward
-    const mat = new THREE.MeshStandardMaterial({ roughness: 0.45, metalness: 0.1 });
-    bars = new THREE.InstancedMesh(geo, mat, cells.length);
-    bars.receiveShadow = true;
-    bars.frustumCulled = false;
-    cells.forEach((c, i) => bars.setColorAt(i, levelColors[c.day.level]));
-    board.add(bars);
-
-    target = new Float32Array(cells.length);
-    computeTargets();
-    if (prevHeights?.length === cells.length) {
-      current = prevHeights;
-      current.set(target); // jump straight to final heights, no grow-in
-      animStart = -Infinity;
-      writeAllMatrices();
-    } else {
-      current = new Float32Array(cells.length); // start flat → grow-in animation
-      animStart = performance.now();
-    }
-
-    if (opts.labels) {
-      // month labels along the back edge (like the top row on GitHub)
-      let lastMonth = -1;
-      for (const c of cells) {
-        const m = Number(c.day.date.slice(5, 7)) - 1;
-        if (m !== lastMonth && c.row === 0) {
-          lastMonth = m;
-          const t = textPlane(MONTHS[m], { size: 0.9, align: 'left' });
-          t.position.set(c.x - bar / 2, 0.01, z0 - CELL * 1.2);
-          board.add(t);
-        }
-      }
-      // weekday labels on the left
-      [['Mon', 1], ['Wed', 3], ['Fri', 5]].forEach(([name, row]) => {
-        const t = textPlane(name, { size: 0.7, align: 'right' });
-        t.position.set(x0 - CELL * 0.8, 0.01, z0 + row * CELL);
-        board.add(t);
-      });
-    }
-
-    if (opts.title) {
-      // name + year on the front of the plinth top
-      const year = days[0].date.slice(0, 4);
-      const title = textPlane(`${opts.user || 'sample'}  ·  ${year}`, { size: 1.4, color: theme.text, weight: 600, align: 'left' });
-      title.position.set(x0 - bar / 2, 0.01, z0 + 7 * CELL + 1.0);
-      board.add(title);
-    }
-
-    // ground shadow catcher
-    ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShadowMaterial({ opacity: theme.dark ? 0.35 : 0.15 }));
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = (opts.base ? -BASE_H : 0) - 0.01;
-    ground.receiveShadow = true;
-    board.add(ground);
-
+    const ctx = {
+      board,
+      renderer,
+      canvas: canvas2d,
+      theme,
+      days,
+      prevHeights,
+      get opts() {
+        return opts; // always the latest options
+      },
+    };
+    style = styleDef.create(ctx);
+    style.resize?.(size.w, size.h);
     applyLiveOptions();
-  }
-
-  function computeTargets() {
-    if (!cells.length) return;
-    const max = Math.max(1, ...cells.map((c) => c.day.count));
-    const norm = opts.log ? (n) => Math.log1p(n) / Math.log1p(max) : (n) => n / max;
-    cells.forEach((c, i) => {
-      target[i] = c.day.count > 0 ? 0.2 + norm(c.day.count) * opts.height : MIN_H;
-    });
-  }
-
-  const tmpMatrix = new THREE.Matrix4();
-  const tmpPos = new THREE.Vector3();
-  const tmpQuat = new THREE.Quaternion();
-  const tmpScale = new THREE.Vector3();
-
-  function setBarMatrix(i) {
-    const c = cells[i];
-    tmpPos.set(c.x, 0, c.z);
-    tmpScale.set(1, Math.max(current[i], 0.0001), 1);
-    bars.setMatrixAt(i, tmpMatrix.compose(tmpPos, tmpQuat, tmpScale));
-  }
-
-  function writeAllMatrices() {
-    cells.forEach((_, i) => setBarMatrix(i));
-    bars.instanceMatrix.needsUpdate = true;
-  }
-
-  function animateBars(now) {
-    if (!bars) return;
-    let changed = false;
-    const elapsed = now - animStart;
-    for (let i = 0; i < cells.length; i++) {
-      if (elapsed < cells[i].col * 18) continue; // left-to-right wave on load
-      const diff = target[i] - current[i];
-      if (Math.abs(diff) < 0.001) {
-        if (current[i] === target[i]) continue;
-        current[i] = target[i];
-      } else {
-        current[i] += diff * 0.12;
-      }
-      setBarMatrix(i);
-      changed = true;
-    }
-    if (changed) {
-      bars.instanceMatrix.needsUpdate = true;
-      bars.boundingSphere = null; // recompute for raycasting
-      bars.boundingBox = null;
-    }
   }
 
   // ---------- camera ----------
   function fitDistance() {
     // keep the whole board in frame on narrow/tall containers
-    const halfWidth = 32;
+    const halfWidth = styleDef.camera?.halfWidth ?? 32;
+    const base = styleDef.camera?.dist ?? 64;
     const hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect);
-    return Math.max(VIEW_DIST * 0.7, Math.min(180, halfWidth / Math.tan(hfov / 2)));
+    return Math.max(base * 0.7, Math.min(180, halfWidth / Math.tan(hfov / 2)));
   }
 
   function resetView() {
     if (opts.camera) camera.position.fromArray(opts.camera);
-    else camera.position.copy(VIEW_DIR).multiplyScalar(fitDistance());
+    else camera.position.fromArray(styleDef.camera?.dir ?? [-18, 32, 52]).normalize().multiplyScalar(fitDistance());
     controls.target.set(0, 0, 0);
     controls.update();
   }
 
   // ---------- sizing ----------
   function resize() {
-    const w = container.clientWidth || 1;
-    const h = container.clientHeight || 1;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
+    size = { w: container.clientWidth || 1, h: container.clientHeight || 1 };
+    renderer.setSize(size.w, size.h, false);
+    composer?.setSize(size.w, size.h);
+    camera.aspect = size.w / size.h;
     camera.updateProjectionMatrix();
+    style?.resize?.(size.w, size.h);
   }
   const resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(container);
@@ -359,38 +238,41 @@ export function createHeatmap(container, initialOptions = {}) {
   let pointerPx = { x: 0, y: 0 };
 
   const onPointerMove = (e) => {
-    const r = renderer.domElement.getBoundingClientRect();
+    const r = container.getBoundingClientRect();
     pointerPx = { x: e.clientX - r.left, y: e.clientY - r.top };
     pointer.set((pointerPx.x / r.width) * 2 - 1, -(pointerPx.y / r.height) * 2 + 1);
     pointerInside = true;
   };
   const onPointerLeave = () => (pointerInside = false);
-  renderer.domElement.addEventListener('pointermove', onPointerMove);
-  renderer.domElement.addEventListener('pointerleave', onPointerLeave);
+  for (const el of [renderer.domElement, canvas2d]) {
+    el.addEventListener('pointermove', onPointerMove);
+    el.addEventListener('pointerleave', onPointerLeave);
+  }
 
   function setHovered(i) {
     if (i === hovered) return;
-    if (hovered >= 0) bars.setColorAt(hovered, levelColors[cells[hovered].day.level]);
     hovered = i;
-    if (i >= 0) bars.setColorAt(i, hoverColor);
-    bars.instanceColor.needsUpdate = true;
+    style?.setHover?.(i);
   }
 
   function updateHover() {
-    if (!bars || !pointerInside || !opts.tooltip) {
-      if (bars) setHovered(-1);
-      tooltip.style.display = 'none';
-      return;
-    }
-    raycaster.setFromCamera(pointer, camera);
-    const hit = raycaster.intersectObject(bars, false)[0];
-    if (!hit) {
+    if (!style || !pointerInside || !opts.tooltip) {
       setHovered(-1);
       tooltip.style.display = 'none';
       return;
     }
-    setHovered(hit.instanceId);
-    const { day } = cells[hit.instanceId];
+    let i = -1;
+    if (style.is2d) i = style.pickPx(pointerPx.x, pointerPx.y);
+    else {
+      raycaster.setFromCamera(pointer, camera);
+      i = style.pick(raycaster);
+    }
+    setHovered(i);
+    if (i < 0) {
+      tooltip.style.display = 'none';
+      return;
+    }
+    const day = days[i];
     const n = day.count;
     tooltip.textContent = `${n === 0 ? 'No' : n} contribution${n === 1 ? '' : 's'} on ${fmtDate(day.date)}`;
     tooltip.style.left = `${pointerPx.x}px`;
@@ -408,47 +290,34 @@ export function createHeatmap(container, initialOptions = {}) {
       const data = user ? await fetchContributions(user, year) : sampleContributions(year);
       if (token !== loadToken) return; // a newer load started meanwhile
       days = data;
-      buildBoard(false);
+      build(false);
       emit('load', { user, year, days });
     } catch (error) {
       if (token === loadToken) emit('error', error);
     }
   }
 
-  // ---------- STL export ----------
-  function exportSTL() {
-    if (!bars) return null;
-    const parts = [];
-    if (opts.base) parts.push(plinth.geometry.clone());
-    const bar = opts.barSize * CELL;
-    const box = new THREE.BoxGeometry(bar, 1, bar);
-    box.translate(0, 0.5, 0);
-    cells.forEach((c, i) => {
-      const g = box.clone();
-      g.scale(1, target[i], 1);
-      g.translate(c.x, 0, c.z);
-      parts.push(g);
-    });
-    const mesh = new THREE.Mesh(mergeGeometries(parts));
-    mesh.rotation.x = Math.PI / 2; // most slicers treat Z as up
-    mesh.updateMatrixWorld();
-    const data = new STLExporter().parse(mesh, { binary: true });
-    parts.forEach((g) => g.dispose());
-    box.dispose();
-    mesh.geometry.dispose();
-    return new Blob([data], { type: 'model/stl' });
-  }
-
   // ---------- loop ----------
   renderer.setAnimationLoop((now) => {
-    animateBars(now);
+    style?.update(now);
+    if (styleDef.is2d) {
+      updateHover();
+      return; // the style drew itself
+    }
     controls.update();
     // fog only softens the far edge of the board, however far away the camera is
     const dist = camera.position.length();
-    scene.fog.near = dist + 25;
-    scene.fog.far = opts.transparent ? Infinity : dist + 120;
+    const fog = styleDef.fog !== false && !opts.transparent;
+    scene.fog.near = fog ? dist + 25 : 1e6;
+    scene.fog.far = fog ? dist + 120 : 1e6 + 1;
+    if (highlighted >= 0 && style?.anchor) {
+      marker.position.copy(style.anchor(highlighted)).add(new THREE.Vector3(0, 0.9, 0));
+      marker.material.color.set(theme.accent);
+      marker.visible = true;
+    } else marker.visible = false;
     updateHover();
-    renderer.render(scene, camera);
+    if (useBloom()) composer.render();
+    else renderer.render(scene, camera);
   });
 
   applyTheme();
@@ -463,23 +332,35 @@ export function createHeatmap(container, initialOptions = {}) {
     get days() {
       return days;
     },
+    /** For debugging: the three.js scene. */
+    get scene() {
+      return scene;
+    },
     /** Change any options; reloads data only when user/year change. */
     setOptions(patch) {
       const prev = opts;
       opts = { ...opts, ...patch };
       const changed = (k) => JSON.stringify(prev[k]) !== JSON.stringify(opts[k]);
       if (changed('user') || changed('year')) return load();
-      if (changed('theme')) applyTheme();
-      if (REBUILD_KEYS.some(changed)) buildBoard(true);
-      else if (HEIGHT_KEYS.some(changed)) computeTargets();
-      if (changed('camera')) resetView();
+      if (changed('style') || changed('theme')) applyTheme();
+      if (REBUILD_KEYS.some(changed)) build(!changed('style'));
+      else if (IN_PLACE_KEYS.some(changed)) style?.setOptions?.(opts);
+      if (changed('camera') || changed('style')) resetView();
       applyLiveOptions();
     },
     reload: load,
     resetView,
     /** Current camera position, rounded, for saving a view into options. */
     getCamera: () => camera.position.toArray().map((n) => Math.round(n * 10) / 10),
-    exportSTL,
+    /** Mark one day (e.g. the one the song is playing); -1 clears. */
+    highlight(i) {
+      highlighted = i;
+      style?.setHighlight?.(i);
+    },
+    get canExportSTL() {
+      return Boolean(styleDef.stl && style?.exportSTL);
+    },
+    exportSTL: () => (styleDef.stl ? style?.exportSTL?.() ?? null : null),
     on(name, fn) {
       (listeners[name] ||= []).push(fn);
       return () => (listeners[name] = listeners[name].filter((f) => f !== fn));
@@ -490,8 +371,10 @@ export function createHeatmap(container, initialOptions = {}) {
       resizeObserver.disconnect();
       controls.dispose();
       disposeBoard();
+      composer?.dispose();
       renderer.dispose();
       renderer.domElement.remove();
+      canvas2d.remove();
       tooltip.remove();
     },
   };
