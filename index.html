@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GitHub Heatmap 3D</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="description" content="Turn your GitHub contribution graph into a 360° rotatable 3D model. Embed it on your website or GitHub README." />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
@@ -28,15 +30,70 @@
 
     <div class="panel controls">
       <div class="themes" id="themes" role="group" aria-label="Theme"></div>
-      <label><input type="checkbox" id="autorotate" checked /> Auto-rotate</label>
-      <label><input type="checkbox" id="logscale" /> Log scale</label>
-      <label class="slider">Height <input type="range" id="heightScale" min="2" max="20" value="8" /></label>
+      <label><input type="checkbox" data-opt="autoRotate" /> Auto-rotate</label>
+      <label><input type="checkbox" data-opt="log" /> Log scale</label>
+      <label class="slider">Height <input type="range" data-opt="height" min="2" max="20" /></label>
       <button id="resetView" type="button">Reset view</button>
       <button id="exportStl" type="button">Download STL</button>
       <div class="legend">Less <span id="legend" style="display: contents"></span> More</div>
+      <button id="openDrawer" type="button" class="primary">Customize &amp; Embed</button>
     </div>
 
-    <div id="tooltip" hidden></div>
+    <aside class="panel drawer" id="drawer" hidden aria-label="Customize and embed">
+      <div class="drawer-head">
+        <h2>Customize &amp; Embed</h2>
+        <button type="button" id="closeDrawer" class="icon" aria-label="Close">✕</button>
+      </div>
+
+      <section>
+        <h3>Look</h3>
+        <label class="range">Bar size <input type="range" data-opt="barSize" min="0.3" max="1" step="0.02" /></label>
+        <label><input type="checkbox" data-opt="shadows" /> Shadows</label>
+        <label><input type="checkbox" data-opt="base" /> Base</label>
+        <label><input type="checkbox" data-opt="labels" /> Month &amp; day labels</label>
+        <label><input type="checkbox" data-opt="title" /> Name &amp; year</label>
+        <label><input type="checkbox" data-opt="transparent" /> Transparent background</label>
+      </section>
+
+      <section>
+        <h3>Motion</h3>
+        <label class="range">Rotation speed <input type="range" data-opt="rotateSpeed" min="-5" max="5" step="0.1" /></label>
+        <label><input type="checkbox" data-opt="interactive" /> Drag to rotate</label>
+        <label><input type="checkbox" data-opt="zoom" /> Scroll to zoom</label>
+        <label><input type="checkbox" data-opt="tooltip" /> Hover tooltips</label>
+      </section>
+
+      <section>
+        <h3>Camera</h3>
+        <p class="hint">Rotate and zoom the model to the angle you like, then save it as the starting view.</p>
+        <div class="buttons">
+          <button type="button" id="saveCamera">Save this view</button>
+          <button type="button" id="clearCamera">Use default</button>
+        </div>
+        <p class="hint" id="cameraStatus"></p>
+      </section>
+
+      <section>
+        <h3>Get the code</h3>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" data-tab="website" aria-selected="true">Website</button>
+          <button type="button" role="tab" data-tab="script">Script</button>
+          <button type="button" role="tab" data-tab="readme">README</button>
+          <button type="button" role="tab" data-tab="link">Link</button>
+        </div>
+        <p class="hint" id="tabHint"></p>
+        <div class="size" id="sizeFields">
+          <label>Width <input type="text" id="embedWidth" value="100%" /></label>
+          <label>Height <input type="text" id="embedHeight" value="420" /></label>
+        </div>
+        <pre id="code"></pre>
+        <div class="buttons">
+          <button type="button" id="copy" class="primary">Copy code</button>
+          <a id="previewLink" target="_blank" rel="noopener">Open preview ↗</a>
+        </div>
+        <img id="readmePreview" alt="README image preview" hidden />
+      </section>
+    </aside>
 
     <script type="module" src="/src/main.js"></script>
   </body>
