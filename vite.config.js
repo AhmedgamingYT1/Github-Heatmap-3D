@@ -13,8 +13,25 @@ const devApi = {
   },
 };
 
+// Dev-only: POST a data URL to /__save-preview?name=x to write public/previews/x.jpg
+// (used once to capture the style preview images on the landing page).
+const savePreview = {
+  name: 'save-preview',
+  configureServer(server) {
+    server.middlewares.use('/__save-preview', async (req, res) => {
+      const name = new URL(req.url, 'http://x').searchParams.get('name').replace(/[^a-z0-9-]/g, '');
+      let body = '';
+      for await (const chunk of req) body += chunk;
+      const { mkdirSync, writeFileSync } = await import('node:fs');
+      mkdirSync('public/previews', { recursive: true });
+      writeFileSync(`public/previews/${name}.jpg`, Buffer.from(body.split(',')[1], 'base64'));
+      res.end('saved');
+    });
+  },
+};
+
 export default defineConfig({
-  plugins: [devApi],
+  plugins: [devApi, savePreview],
   build: {
     rollupOptions: {
       input: {

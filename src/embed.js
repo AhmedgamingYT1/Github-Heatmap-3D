@@ -14,6 +14,7 @@ if (!opts.transparent) document.body.style.background = theme.background;
 $('message').style.color = theme.text;
 
 const map = createHeatmap($('map'), opts);
+if (import.meta.env.DEV) window.__heatmap = map; // for debugging and capturing previews
 map.on('loading', () => ($('message').textContent = 'Loading…'));
 map.on('load', ({ days, user }) => {
   $('message').textContent = '';
