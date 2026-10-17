@@ -3,6 +3,7 @@
 import { parseOptions } from '../src/lib/options.js';
 import { fetchContributions, sampleContributions } from '../src/lib/data.js';
 import { renderSvg, renderMessageSvg } from '../src/lib/svg.js';
+import { renderChartSvg, CHART_TYPES } from '../src/lib/charts.js';
 
 export default async function handler(req, res) {
   const params = new URL(req.url, 'http://localhost').searchParams;
@@ -13,7 +14,7 @@ export default async function handler(req, res) {
     // GitHub's image proxy respects these; refresh hourly, serve stale for a day while refreshing
     res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400');
     res.statusCode = 200;
-    res.end(renderSvg(days, opts));
+    res.end(CHART_TYPES[opts.type] ? renderChartSvg(opts.type, days, opts) : renderSvg(days, opts));
   } catch (err) {
     res.setHeader('Cache-Control', 'public, max-age=300');
     res.statusCode = 200; // still return an image so the README shows the message
