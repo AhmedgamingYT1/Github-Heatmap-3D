@@ -5,6 +5,7 @@ import { THEMES, getTheme, applyThemeToPage } from './lib/themes.js';
 import { OPTIONS, parseOptions, toParams, cameraToAngles } from './lib/options.js';
 import { STYLES, getStyle } from './lib/styles/index.js';
 import { composeSong, createSongPlayer, renderSongWav } from './lib/song.js';
+import { CHART_TYPES } from './lib/charts.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -13,7 +14,7 @@ const SITE = (import.meta.env.VITE_SITE_URL || location.origin).replace(/\/$/, '
 
 // Which options each embed type understands.
 const EMBED_KEYS = Object.keys(OPTIONS).filter((k) => k !== 'angle' && k !== 'tilt');
-const README_KEYS = ['user', 'year', 'theme', 'height', 'log', 'barSize', 'shadows', 'base', 'labels', 'title', 'transparent', 'angle', 'tilt'];
+const README_KEYS = ['type', 'user', 'year', 'theme', 'height', 'log', 'barSize', 'shadows', 'base', 'labels', 'title', 'transparent', 'angle', 'tilt'];
 
 // ---------- state ----------
 const params = new URLSearchParams(location.search);
@@ -236,7 +237,7 @@ let tab = 'website';
 const TAB_HINTS = {
   website: 'Paste into any HTML page — fully interactive 3D.',
   script: 'Paste where the model should appear. Options are data-* attributes you can edit by hand.',
-  readme: 'GitHub READMEs only allow images, so this is a 3D-style picture of your saved view (City style). Clicking it opens the interactive version.',
+  readme: 'GitHub READMEs only allow images. Pick a 3D picture of your saved view or a 2D design; clicking it opens the interactive version.',
   link: 'A direct link to this exact view.',
 };
 
@@ -244,14 +245,14 @@ const kebab = (s) => s.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
 const cssSize = (v) => (/^\d+$/.test(v.trim()) ? `${v.trim()}px` : v.trim() || '100%');
 
 function readmeParams() {
-  const opts = { ...state, ...(state.camera ? cameraToAngles(state.camera) : {}) };
+  const opts = { ...state, ...(state.camera ? cameraToAngles(state.camera) : {}), type: $('readmeType').value };
   return toParams(opts, README_KEYS);
 }
 
 function renderCode() {
   if ($('drawer').hidden) return;
   const embedQuery = toParams(state, EMBED_KEYS).toString();
-  const pageUrl = `${SITE}/${embedQuery ? '?' + embedQuery : ''}`;
+  const pageUrl = `${SITE}/studio.html${embedQuery ? '?' + embedQuery : ''}`;
   const embedUrl = `${SITE}/embed.html${embedQuery ? '?' + embedQuery : ''}`;
   const name = state.user || 'sample';
   const w = $('embedWidth').value;
@@ -279,6 +280,7 @@ function renderCode() {
   $('previewLink').href = preview;
   $('tabHint').textContent = TAB_HINTS[tab];
   $('sizeFields').hidden = !(tab === 'website' || tab === 'script');
+  $('readmeTypeField').hidden = tab !== 'readme';
   $('readmePreview').hidden = tab !== 'readme';
 }
 
@@ -290,6 +292,8 @@ for (const b of document.querySelectorAll('[data-tab]')) {
   });
 }
 $('embedWidth').addEventListener('input', renderCode);
+for (const [id, name] of [['3d', '3D board (City)'], ...Object.entries(CHART_TYPES)]) $('readmeType').add(new Option(name, id));
+$('readmeType').addEventListener('change', renderCode);
 $('embedHeight').addEventListener('input', renderCode);
 
 $('copy').addEventListener('click', async () => {
