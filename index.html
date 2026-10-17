@@ -25,6 +25,7 @@
       <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>Heatmap 3D</a>
       <div class="nav-links">
         <a href="#build">Build</a>
+        <a href="#use">Use it</a>
         <a href="#explore">Explore</a>
         <a href="#features">Features</a>
         <a href="#pricing">Pricing</a>
@@ -115,45 +116,186 @@
       </div>
     </section>
 
-    <!-- ===== Explore: the free world up front, the Pro worlds beside it ===== -->
+    <!-- ===== What you can do: the year, taken everywhere ===== -->
+    <section class="section" id="use">
+      <div class="section-head">
+        <span class="kicker">02 · What you can do</span>
+        <h2>Your year, everywhere you show your work.</h2>
+        <p class="sub">Type your username, pick a world, then take it with you. Each of these is one click in the Studio.</p>
+      </div>
+      <ol class="steps">
+        <li><b>1</b><span><strong>Type your username</strong>We read your public GitHub graph.</span></li>
+        <li><b>2</b><span><strong>Pick a world and an angle</strong>City, Night City, Galaxy or Forest.</span></li>
+        <li><b>3</b><span><strong>Put it anywhere</strong>Your site, your README, a link or your desk.</span></li>
+      </ol>
+      <div class="seg use-tabs" id="useTabs" role="tablist" aria-label="Where to use it">
+        <button type="button" role="tab" data-use="site" aria-selected="true">Website</button>
+        <button type="button" role="tab" data-use="readme" aria-selected="false">README</button>
+        <button type="button" role="tab" data-use="link" aria-selected="false">Share link</button>
+        <button type="button" role="tab" data-use="print" aria-selected="false">3D print</button>
+        <span class="seg-glider" aria-hidden="true"></span>
+      </div>
+      <div class="bezel use-box">
+        <div class="bezel-in use-in">
+          <div class="use-panel on" data-use="site" role="tabpanel">
+            <div class="use-demo">
+              <div class="browser">
+                <div class="browser-top"><span class="dots3" aria-hidden="true"><i></i><i></i><i></i></span><span class="browser-url">yourname.dev</span></div>
+                <div class="browser-body">
+                  <div class="site-text"><b>Hi, I build things.</b><i></i><i></i><i class="short"></i></div>
+                  <div class="site-embed" style="--img: url(/previews/galaxy.jpg)"><span>drag to spin</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="use-info">
+              <h3>Live 3D on your website</h3>
+              <p>Paste one line into your portfolio, blog or docs. Visitors can spin it, zoom in and hover any day.</p>
+              <div class="code snippet">
+                <div class="code-top"><span class="dots3" aria-hidden="true"><i></i><i></i><i></i></span><span>index.html</span><button type="button" class="copy" data-copy="embedCode">Copy</button></div>
+                <pre id="embedCode"></pre>
+              </div>
+              <ul class="ticks"><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>An iframe or a script tag</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Transparent background to match your page</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Keeps itself up to date</li></ul>
+            </div>
+          </div>
+          <div class="use-panel" data-use="readme" role="tabpanel">
+            <div class="use-demo">
+              <div class="readme">
+                <div class="readme-top"><svg class="gh-mark" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span>you / <b>README.md</b></span></div>
+                <div class="readme-body"><h4>Hi there, I’m you</h4><p>I write code most days. Here’s my year:</p><div class="readme-art" id="readmeArt"></div></div>
+              </div>
+            </div>
+            <div class="use-info">
+              <h3>A picture for your GitHub README</h3>
+              <p>READMEs only allow images, so you get a crisp 3D picture of your board (or a stats card) that links to the live version.</p>
+              <div class="code snippet">
+                <div class="code-top"><span class="dots3" aria-hidden="true"><i></i><i></i><i></i></span><span>README.md</span><button type="button" class="copy" data-copy="readmeCode">Copy</button></div>
+                <pre id="readmeCode"></pre>
+              </div>
+              <ul class="ticks"><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>3D board, stats card, weekly rhythm or monthly bars</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Refreshes every hour</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Your saved camera angle</li></ul>
+            </div>
+          </div>
+          <div class="use-panel" data-use="link" role="tabpanel">
+            <div class="use-demo">
+              <div class="chat">
+                <div class="bubble">Wrapped up my year. Have a look!</div>
+                <div class="bubble link-card">
+                  <div class="link-img" style="--img: url(/previews/night.jpg)"></div>
+                  <div class="link-text"><b>@you · 2026 in 3D</b><span>github-heatmap-3d.vercel.app</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="use-info">
+              <h3>A link to share anywhere</h3>
+              <p>Every view in the Studio has its own link: your world, colors and camera angle. Send it in a chat, a post or a CV.</p>
+              <div class="code snippet">
+                <div class="code-top"><span class="dots3" aria-hidden="true"><i></i><i></i><i></i></span><span>link</span><button type="button" class="copy" data-copy="linkCode">Copy</button></div>
+                <pre id="linkCode"></pre>
+              </div>
+              <ul class="ticks"><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Opens straight into the live 3D view</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Remembers your world, colors and angle</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>No account needed to view</li></ul>
+            </div>
+          </div>
+          <div class="use-panel" data-use="print" role="tabpanel">
+            <div class="use-demo">
+              <div class="print"><div class="print-model" id="printArt" aria-hidden="true"></div><span class="print-chip">.STL</span></div>
+            </div>
+            <div class="use-info">
+              <h3>Your year on your desk</h3>
+              <p>Download your City or Night City as an STL and print it. A year of work you can hold in your hand.</p>
+              <ol class="mini-steps"><li>Open your year in the Studio</li><li>Press <b>Download STL</b></li><li>Slice and print, in any color</li></ol>
+              <ul class="ticks"><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Works with any slicer and printer</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Base, labels and bars in one solid model</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Z-up, ready to slice</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <a class="pill-btn" href="/studio.html">Open the Studio <span aria-hidden="true">→</span></a>
+    </section>
+
+    <!-- ===== Explore: Free or Pro, one world at a time ===== -->
     <section class="section" id="explore">
       <div class="section-head">
-        <span class="kicker">02 · Explore</span>
+        <span class="kicker">03 · Explore</span>
         <h2>Pick a world for your year.</h2>
-        <p class="sub">Start free with the City. Pro opens three more worlds and your song. Open any of them live.</p>
+        <p class="sub">Start free with the City. Pro opens three more worlds and your song.</p>
       </div>
-      <div class="worlds" id="expand">
-        <button type="button" class="world world-free" data-open="city" style="--img: url(/previews/city.jpg)">
-          <span class="world-tag free">Free forever</span>
-          <span class="world-body">
-            <b>City</b>
-            <span>The classic. One bar per day, in eight color themes. Embeds, README cards and STL included.</span>
-            <span class="world-cta">Open it live <i aria-hidden="true">↗</i></span>
-          </span>
-        </button>
-        <div class="worlds-pro">
-          <div class="worlds-pro-head"><span class="pro-badge">PRO</span><span>Three more worlds and your song · from $2.42/mo</span></div>
-          <button type="button" class="world" data-open="night" style="--img: url(/previews/night.jpg)">
-            <span class="world-body"><b>Night City</b><span>Glass towers for big days, lit windows and traffic for the rest.</span></span>
-            <i class="world-go" aria-hidden="true">↗</i>
-          </button>
-          <button type="button" class="world" data-open="galaxy" style="--img: url(/previews/galaxy.jpg)">
-            <span class="world-body"><b>Galaxy</b><span>January at the core, December at the rim. Big days become planets.</span></span>
-            <i class="world-go" aria-hidden="true">↗</i>
-          </button>
-          <button type="button" class="world" data-open="forest" style="--img: url(/previews/forest.jpg)">
-            <span class="world-body"><b>Forest</b><span>A real tree for every day you shipped. Big days bloom.</span></span>
-            <i class="world-go" aria-hidden="true">↗</i>
-          </button>
-          <button type="button" class="world" data-open="sakura" style="--img: url(/previews/sakura.jpg)">
-            <span class="world-body"><b>Four seasons</b><span>The forest in Spring, Autumn, Sakura and Dream.</span></span>
-            <i class="world-go" aria-hidden="true">↗</i>
-          </button>
-          <button type="button" class="world world-song" data-open="song" id="songCard">
-            <span class="xcard-wave" id="songWave" aria-hidden="true"></span>
-            <span class="world-body"><b id="songTitle">Your song</b><span id="songMeta">One note per day. Press to play.</span></span>
-            <i class="world-go" id="songIcon" aria-hidden="true">▶</i>
-          </button>
+      <div class="seg plan-toggle" id="planToggle" role="tablist" aria-label="Plan">
+        <button type="button" role="tab" data-plan="free" aria-selected="true">Free</button>
+        <button type="button" role="tab" data-plan="pro" aria-selected="false">Pro <small>5 worlds</small></button>
+        <span class="seg-glider" aria-hidden="true"></span>
+      </div>
+      <div class="plan-views" id="expand">
+        <div class="plan-view on" data-plan="free" role="tabpanel">
+          <article class="show ">
+            <button type="button" class="show-media" data-open="city" style="--img: url(/previews/city.jpg)" aria-label="Open City live"><span class="show-live">Open it live <i aria-hidden="true">↗</i></span></button>
+            <div class="show-info">
+              <span class="show-tag free">Free forever</span>
+              <h3>City</h3>
+              <p>The classic contribution graph, raised into a skyline. One bar per day, from a whisper of green to your biggest day.</p>
+              <ul class="ticks"><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Eight color themes, GitHub green included</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Website embed and README image</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Download as an STL for 3D printing</li></ul>
+              <div class="show-actions"><button type="button" class="pill-btn" data-open="city">Open it live</button><a class="pill-btn pill-btn-ghost" href="/studio.html?style=city">Make it mine <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+        </div>
+        <div class="plan-view" data-plan="pro" role="tabpanel">
+          <div class="slider" id="proSlider">
+          <article class="show ">
+            <button type="button" class="show-media" data-open="night" style="--img: url(/previews/night.jpg)" aria-label="Open Night City live"><span class="show-live">Open it live <i aria-hidden="true">↗</i></span></button>
+            <div class="show-info">
+              <span class="show-tag pro">Pro</span>
+              <h3>Night City</h3>
+              <p>Your year after dark. Big days become glass towers, quiet days lit blocks, with traffic running down the avenues.</p>
+              <ul class="ticks"><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Glowing windows by contribution level</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Cars, street lights and rooftop beacons</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>STL export of the whole skyline</li></ul>
+              <div class="show-actions"><button type="button" class="pill-btn" data-open="night">Open it live</button><a class="pill-btn pill-btn-ghost" href="/studio.html?style=night">Make it mine <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+          <article class="show ">
+            <button type="button" class="show-media" data-open="galaxy" style="--img: url(/previews/galaxy.jpg)" aria-label="Open Galaxy live"><span class="show-live">Open it live <i aria-hidden="true">↗</i></span></button>
+            <div class="show-info">
+              <span class="show-tag pro">Pro</span>
+              <h3>Galaxy</h3>
+              <p>January at the core, December at the rim. Every day is a star, and your biggest days become planets.</p>
+              <ul class="ticks"><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>A spiral arm per season</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Planets for your best days</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Slowly turning on its own</li></ul>
+              <div class="show-actions"><button type="button" class="pill-btn" data-open="galaxy">Open it live</button><a class="pill-btn pill-btn-ghost" href="/studio.html?style=galaxy">Make it mine <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+          <article class="show ">
+            <button type="button" class="show-media" data-open="forest" style="--img: url(/previews/forest.jpg)" aria-label="Open Forest live"><span class="show-live">Open it live <i aria-hidden="true">↗</i></span></button>
+            <div class="show-info">
+              <span class="show-tag pro">Pro</span>
+              <h3>Forest</h3>
+              <p>A real tree for every day you shipped. Quiet days grow bushes, big days bloom into full crowns.</p>
+              <ul class="ticks"><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Oak, ash, aspen and pine</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Leaves that sway in the wind</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>A grassy island with the GitHub grid</li></ul>
+              <div class="show-actions"><button type="button" class="pill-btn" data-open="forest">Open it live</button><a class="pill-btn pill-btn-ghost" href="/studio.html?style=forest">Make it mine <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+          <article class="show ">
+            <button type="button" class="show-media" data-open="sakura" style="--img: url(/previews/sakura.jpg)" aria-label="Open Four seasons live"><span class="show-live">Open it live <i aria-hidden="true">↗</i></span></button>
+            <div class="show-info">
+              <span class="show-tag pro">Pro</span>
+              <h3>Four seasons</h3>
+              <p>The same forest in Spring, Autumn, Sakura and Dream. Pick the season that suits your year.</p>
+              <ul class="ticks"><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Four leaf palettes</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Matching grass and ground</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Switch seasons any time</li></ul>
+              <div class="show-actions"><button type="button" class="pill-btn" data-open="sakura">Open it live</button><a class="pill-btn pill-btn-ghost" href="/studio.html?style=forest&palette=sakura">Make it mine <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+          <article class="show show-song">
+            <button type="button" class="show-media song-media" data-open="song" id="songCard" aria-label="Play your year as a song">
+              <span class="xcard-wave" id="songWave" aria-hidden="true"></span>
+              <span class="song-play" id="songIcon" aria-hidden="true">▶</span>
+            </button>
+            <div class="show-info">
+              <span class="show-tag pro">Pro</span>
+              <h3 id="songTitle">Your song</h3>
+              <p id="songMeta">One note per day. Press to play.</p>
+              <ul class="ticks"><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Busy days play louder and higher</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>A title, key and tempo from your year</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Download it as a WAV</li></ul>
+              <div class="show-actions"><button type="button" class="pill-btn" data-open="song">Play it</button><a class="pill-btn pill-btn-ghost" href="/studio.html">Hear yours <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+          </div>
+          <div class="slider-nav">
+            <button type="button" class="icon-btn" id="slidePrev" aria-label="Previous world">←</button>
+            <div class="slider-dots" id="slideDots"></div>
+            <button type="button" class="icon-btn" id="slideNext" aria-label="Next world">→</button>
+          </div>
         </div>
       </div>
     </section>
@@ -161,7 +303,7 @@
     <!-- ===== Features: bento of bezel cards ===== -->
     <section class="section" id="features">
       <div class="section-head">
-        <span class="kicker">03 · Features</span>
+        <span class="kicker">04 · Features</span>
         <h2>Made to be shown off.</h2>
       </div>
       <div class="bento">
@@ -184,27 +326,13 @@
           <div class="bezel-in art" id="donutArt"></div>
           <div class="bezel-cap"><b>Weekly rhythm</b><span>See which days you really ship.</span></div>
         </article>
-        <article class="bezel b-embed">
-          <div class="bezel-in code">
-            <div class="code-top"><span class="dots3" aria-hidden="true"><i></i><i></i><i></i></span><span>index.html</span><button type="button" class="copy" id="copyEmbed">Copy</button></div>
-            <pre id="embedCode"></pre>
-          </div>
-          <div class="bezel-cap"><b>One line, any website</b><span>Fully interactive 3D in an iframe or a script tag.</span></div>
-        </article>
-        <article class="bezel b-print">
-          <div class="bezel-in print">
-            <div class="print-model" id="printArt" aria-hidden="true"></div>
-            <span class="print-chip">.STL</span>
-          </div>
-          <div class="bezel-cap"><b>Print your year</b><span>Download an STL and hold it in your hand.</span></div>
-        </article>
       </div>
     </section>
 
     <!-- ===== Pricing ===== -->
     <section class="section" id="pricing">
       <div class="section-head">
-        <span class="kicker">04 · Pricing</span>
+        <span class="kicker">05 · Pricing</span>
         <h2>Start free. Go Pro for the good stuff.</h2>
       </div>
       <div class="billing seg" id="billing" role="radiogroup" aria-label="Billing period">

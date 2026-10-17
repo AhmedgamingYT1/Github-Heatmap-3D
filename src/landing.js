@@ -270,6 +270,7 @@ $('modeToggle').addEventListener('click', () => {
   flatColors();
   renderDock();
   daysPromise.then(renderFeatureArt);
+  daysPromise.then(renderReadmeArt);
 });
 applyHero();
 flatColors();
@@ -365,6 +366,7 @@ daysPromise.then((days) => {
     onStep: (step) => waveBars.forEach((b, k) => b.classList.toggle('on', k * BAR_DAYS <= step)),
     onState(playing) {
       $('songIcon').textContent = playing ? '❚❚' : '▶';
+      for (const b of document.querySelectorAll('.show-song .show-actions button')) b.textContent = playing ? 'Pause' : 'Play it';
       $('songCard').classList.toggle('is-open', playing);
     },
     onEnd: () => waveBars.forEach((b) => b.classList.remove('on')),
@@ -390,29 +392,96 @@ daysPromise.then((days) => {
 });
 daysPromise.then(renderFeatureArt);
 
-const embed = `<iframe src="${location.origin}/embed.html?user=you&style=galaxy"\n  style="width:100%;height:420px;border:0"></iframe>`;
+// ---------- what you can do: tabs with real snippets ----------
+const SITE = location.origin;
+const SNIPPETS = {
+  embedCode: `<iframe src="${SITE}/embed.html?user=you&style=galaxy"\n  style="width:100%;height:420px;border:0"></iframe>`,
+  readmeCode: `[![My year in 3D](${SITE}/api/heatmap?user=you)](${SITE}/studio.html?user=you)`,
+  linkCode: `${SITE}/studio.html?user=you&style=night`,
+};
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 // color strings first, then tags (the other order would recolor the quotes in our own spans)
-$('embedCode').innerHTML = esc(embed)
-  .replace(/"([^"]*)"/g, '"<span class="s">$1</span>"')
-  .replace(/(&lt;\/?iframe)/g, '<span class="k">$1</span>');
-$('copyEmbed').addEventListener('click', async () => {
-  try {
-    await navigator.clipboard.writeText(embed);
-    $('copyEmbed').textContent = 'Copied';
-  } catch {
-    $('copyEmbed').textContent = 'Select to copy';
-  }
-  setTimeout(() => ($('copyEmbed').textContent = 'Copy'), 1400);
+const highlight = (code) =>
+  esc(code)
+    .replace(/"([^"]*)"/g, '"<span class="s">$1</span>"')
+    .replace(/(&lt;\/?iframe)/g, '<span class="k">$1</span>')
+    .replace(/\(([^)]*)\)/g, '(<span class="s">$1</span>)');
+for (const [id, code] of Object.entries(SNIPPETS)) $(id).innerHTML = id === 'linkCode' ? `<span class="s">${esc(code)}</span>` : highlight(code);
+for (const b of document.querySelectorAll('[data-copy]')) {
+  b.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(SNIPPETS[b.dataset.copy]);
+      b.textContent = 'Copied';
+    } catch {
+      b.textContent = 'Select to copy';
+    }
+    setTimeout(() => (b.textContent = 'Copy'), 1400);
+  });
+}
+
+const useTabs = $('useTabs');
+useTabs.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-use]');
+  if (!b) return;
+  for (const x of useTabs.querySelectorAll('button')) x.setAttribute('aria-selected', x === b);
+  for (const p of document.querySelectorAll('.use-panel')) p.classList.toggle('on', p.dataset.use === b.dataset.use);
+  moveTabGlider(useTabs);
 });
 
-// tap a theme to recolor the cards in this section
-$('swatches').addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-color]');
+// the README panel shows the real README image, in GitHub's own colors
+function renderReadmeArt(days) {
+  $('readmeArt').innerHTML = renderSvg(days, { ...defaults(), user: HERO_USER, theme: isLight() ? 'github-light' : 'github', transparent: true });
+}
+daysPromise.then(renderReadmeArt);
+
+// ---------- explore: Free or Pro, the Pro worlds one at a time ----------
+const planToggle = $('planToggle');
+planToggle.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-plan]');
   if (!b) return;
-  featureTheme = b.dataset.color;
-  daysPromise.then(renderFeatureArt);
+  for (const x of planToggle.querySelectorAll('button')) x.setAttribute('aria-selected', x === b);
+  for (const v of document.querySelectorAll('.plan-view')) v.classList.toggle('on', v.dataset.plan === b.dataset.plan);
+  moveTabGlider(planToggle);
+  if (b.dataset.plan === 'pro') syncDots();
 });
+
+const slider = $('proSlider');
+const slides = [...slider.children];
+$('slideDots').innerHTML = slides.map((_, k) => `<button type="button" aria-label="World ${k + 1} of ${slides.length}"></button>`).join('');
+const dots = [...$('slideDots').children];
+const step = () => slides[1].offsetLeft - slides[0].offsetLeft; // slide width + gap
+const current = () => Math.round(slider.scrollLeft / step());
+function goTo(k) {
+  k = (k + slides.length) % slides.length;
+  slider.scrollTo({ left: k * step() });
+  markDot(k);
+}
+const markDot = (k) => dots.forEach((d, i) => d.toggleAttribute('data-on', i === k));
+const syncDots = () => markDot(current());
+slider.addEventListener('scroll', syncDots, { passive: true });
+dots.forEach((d, k) => d.addEventListener('click', () => goTo(k)));
+$('slidePrev').addEventListener('click', () => goTo(current() - 1));
+$('slideNext').addEventListener('click', () => goTo(current() + 1));
+syncDots();
+// slides on by itself while in view, until someone touches it
+let autoplay = true;
+for (const ev of ['pointerdown', 'wheel', 'keydown']) slider.parentElement.addEventListener(ev, () => (autoplay = false), { passive: true });
+let sliderVisible = false;
+new IntersectionObserver(([e]) => (sliderVisible = e.isIntersecting)).observe(slider);
+setInterval(() => {
+  if (autoplay && sliderVisible && !player?.playing && !matchMedia('(prefers-reduced-motion: reduce)').matches) goTo(current() + 1);
+}, 6000);
+
+function moveTabGlider(group) {
+  const on = group.querySelector('[aria-selected="true"]');
+  const g = group.querySelector('.seg-glider');
+  g.style.width = `${on.offsetWidth}px`;
+  g.style.transform = `translateX(${on.offsetLeft}px)`;
+}
+const tabGroups = [useTabs, planToggle];
+addEventListener('resize', () => tabGroups.forEach(moveTabGlider));
+document.fonts?.ready.then(() => tabGroups.forEach(moveTabGlider));
+tabGroups.forEach(moveTabGlider);
 
 // count numbers up when they scroll into view
 const counter = new IntersectionObserver((entries) => {
