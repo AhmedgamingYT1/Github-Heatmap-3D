@@ -387,6 +387,9 @@ export function createNightCity(ctx) {
     },
     anchor: (i) => new THREE.Vector3(cells[i].x, tops[i], cells[i].z),
     setShadows() {},
+    replay() {
+      growStart = performance.now();
+    },
     setOptions(next) {
       opts = next;
       build(false); // new heights, no grow-in

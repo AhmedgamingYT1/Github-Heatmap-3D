@@ -408,7 +408,7 @@ export function createGalaxy(ctx) {
     });
   }
 
-  const start = performance.now();
+  let start = performance.now();
   let lastFrame = start;
   let hovered = -1;
   let settled = false;
@@ -427,6 +427,10 @@ export function createGalaxy(ctx) {
   return {
     resize(w, h) {
       uniforms.uScale.value = (h * renderer.getPixelRatio()) / (2 * Math.tan(THREE.MathUtils.degToRad(20)));
+    },
+    replay() {
+      start = performance.now();
+      settled = false;
     },
     update(now) {
       uniforms.uTime.value = now / 1000;

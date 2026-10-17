@@ -105,6 +105,18 @@ export const THEMES = {
     accent: '#b58cff',
     levels: ['#4a4f7a', '#6c8cff', '#b58cff', '#ff8ad8', '#fff4d6'],
   },
+  // one color of filament, like a real 3D print (the landing page's STL card)
+  print: {
+    name: 'Print',
+    hidden: true,
+    dark: false,
+    background: '#f4ede4',
+    plinth: '#e9874a',
+    text: '#7a3d17',
+    label: '#b5612b',
+    accent: '#e9874a',
+    levels: ['#ef9459', '#ef9459', '#ef9459', '#ef9459', '#ef9459'],
+  },
   grove: {
     name: 'Forest',
     hidden: true,

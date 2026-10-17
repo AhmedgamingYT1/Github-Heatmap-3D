@@ -17,12 +17,30 @@ const SPECIES = {
 
 const LEAF_SIZE = 1.6; // bigger leaves so crowns read as full at board scale
 
-let libraryPromise = null;
+const libraries = {};
 
-/** Builds (once) and returns { protos: { species: [proto] }, update(time) }. */
-export function loadTreeLibrary() {
-  libraryPromise ||= buildLibrary();
-  return libraryPromise;
+/**
+ * Builds (once per detail level) and returns { protos: { species: [proto] }, update(time) }.
+ * detail 'low' is for phones: one model per species and much lighter branches.
+ */
+export function loadTreeLibrary(detail = 'high') {
+  libraries[detail] ||= buildLibrary(detail === 'low');
+  return libraries[detail];
+}
+
+// A full forest is ~330 trees, so every triangle counts. Branches get fewer rings and
+// sides (the crowns hide them) and leaves are single cards. On phones the finest twigs go
+// too, with half as many, larger leaves: about an eighth of the original triangles.
+function simplify(options, low) {
+  const { branch, leaves } = options;
+  for (const k in branch.sections) branch.sections[k] = Math.max(2, Math.ceil(branch.sections[k] * (low ? 0.45 : 0.6)));
+  for (const k in branch.segments) branch.segments[k] = Math.max(3, Math.ceil(branch.segments[k] * (low ? 0.5 : 0.75)));
+  leaves.billboard = 'single'; // one card per leaf instead of two crossed ones
+  leaves.size *= 1.15;
+  if (!low) return;
+  if (branch.levels > 1) branch.levels -= 1;
+  leaves.count = Math.max(1, Math.ceil(leaves.count * 0.5));
+  leaves.size *= 1.6;
 }
 
 function waitForImage(texture) {
@@ -77,17 +95,19 @@ function leafMaterial(map, alphaTest) {
   return mat;
 }
 
-async function buildLibrary() {
+async function buildLibrary(low) {
   const leafMats = {};
   const protos = {};
   for (const [species, def] of Object.entries(SPECIES)) {
     protos[species] = [];
-    const variants = [...def.seeds.map((seed) => [def.preset, seed]), ...(def.extra ?? []).map((p) => [p, null])];
+    const seeds = low ? def.seeds.slice(0, 1) : def.seeds;
+    const variants = [...seeds.map((seed) => [def.preset, seed]), ...(low ? [] : def.extra ?? []).map((p) => [p, null])];
     for (const [preset, seed] of variants) {
       const tree = new Tree();
       tree.options.copy(TreePreset[preset]);
       if (seed != null) tree.options.seed = seed;
       tree.options.leaves.size *= LEAF_SIZE;
+      simplify(tree.options, low);
       tree.generate();
 
       const leafType = tree.options.leaves.type;

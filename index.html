@@ -45,8 +45,28 @@
         <p class="sub">Every contribution becomes a building, a star or a tree. Spin it, play it, put it anywhere.</p>
       </div>
 
-      <div class="hero-stage" id="heroStage" aria-label="Interactive 3D contribution graph">
-        <p class="hero-hint" id="heroHint">Loading <span id="heroWho">…</span></p>
+      <div class="hero-view" id="heroView" data-view="2d">
+        <div class="hero-stage" id="heroStage" aria-label="Interactive 3D contribution graph"></div>
+        <p class="hero-hint" id="heroHint" hidden></p>
+        <!-- the same year as GitHub draws it, before it turns 3D -->
+        <figure class="gh" id="heroFlat" aria-label="Your contribution graph, as GitHub shows it">
+          <figcaption class="gh-head"><b id="ghTotal">0</b> contributions in the last year</figcaption>
+          <div class="gh-body">
+            <div class="gh-months" id="ghMonths" aria-hidden="true"></div>
+            <div class="gh-days" aria-hidden="true"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
+            <div class="gh-grid" id="ghGrid"></div>
+          </div>
+          <div class="gh-foot" aria-hidden="true"><span>As seen on GitHub</span><span class="gh-legend">Less<i data-l="0"></i><i data-l="1"></i><i data-l="2"></i><i data-l="3"></i><i data-l="4"></i>More</span></div>
+        </figure>
+        <div class="seg view-toggle" id="viewToggle" role="radiogroup" aria-label="View">
+          <button type="button" role="radio" data-view="2d" aria-checked="false">2D</button>
+          <button type="button" role="radio" data-view="3d" aria-checked="true">3D</button>
+          <span class="seg-glider" aria-hidden="true"></span>
+        </div>
+        <div class="dock" id="colorDock" role="radiogroup" aria-label="Colors">
+          <span class="dock-label">Colors</span>
+          <div class="dock-list" id="colorList"></div>
+        </div>
       </div>
 
       <div class="hero-bar">
@@ -57,10 +77,10 @@
           <button type="submit" class="pill-btn">Build mine <kbd>↵</kbd></button>
         </form>
         <div class="seg" id="heroStyles" role="radiogroup" aria-label="Style">
-          <button type="button" role="radio" data-style="night" aria-checked="true">Night City</button>
+          <button type="button" role="radio" data-style="city" aria-checked="true">City</button>
+          <button type="button" role="radio" data-style="night" aria-checked="false">Night City</button>
           <button type="button" role="radio" data-style="galaxy" aria-checked="false">Galaxy</button>
           <button type="button" role="radio" data-style="forest" aria-checked="false">Forest</button>
-          <button type="button" role="radio" data-style="city" aria-checked="false">City</button>
           <span class="seg-glider" aria-hidden="true"></span>
         </div>
       </div>
@@ -139,11 +159,12 @@
         </article>
         <article class="bezel b-themes">
           <div class="bezel-in swatches" id="swatches"></div>
-          <div class="bezel-cap"><b>Your colors</b><span>Eight themes and four forest seasons.</span></div>
+          <div class="bezel-cap"><b>Your colors</b><span>Eight themes and four forest seasons. Tap one to try it on the hero.</span></div>
         </article>
         <article class="bezel b-print">
           <div class="bezel-in print">
-            <svg viewBox="0 0 120 80" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M10 60 L60 75 L110 60 L60 45 Z"/><path d="M10 60 V64 L60 79 L110 64 V60"/><path d="M40 52 V30 M48 54 V18 M56 56 V36 M64 54 V10 M72 52 V26 M80 50 V34"/></g></svg>
+            <div class="print-model" id="printArt" aria-hidden="true"></div>
+            <span class="print-chip">.STL</span>
           </div>
           <div class="bezel-cap"><b>Print your year</b><span>Download an STL and hold it in your hand.</span></div>
         </article>

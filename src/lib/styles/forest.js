@@ -39,7 +39,7 @@ function grassTexture(color) {
 
 export async function createForest(ctx) {
   const { loadTreeLibrary } = await import('./trees.js');
-  const library = await loadTreeLibrary();
+  const library = await loadTreeLibrary(ctx.opts.detail);
   if (ctx.cancelled()) return null;
 
   const { board, renderer, theme, days } = ctx;
@@ -243,6 +243,11 @@ export async function createForest(ctx) {
     setOptions(next) {
       opts = next;
       plant();
+    },
+    replay() {
+      start = performance.now();
+      settled = false;
+      grow(start); // hide the grown trees right away
     },
   };
 }

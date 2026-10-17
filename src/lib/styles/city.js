@@ -124,6 +124,12 @@ export function createCity(ctx) {
       animStart = performance.now() - layout.cols * 18; // no wave, just resize
     },
     heights: () => current,
+    /** grow in again from flat, left to right */
+    replay() {
+      current.fill(0);
+      writeAll();
+      animStart = performance.now();
+    },
     exportSTL() {
       const parts = [];
       if (opts.base) parts.push(plinth.geometry.clone());

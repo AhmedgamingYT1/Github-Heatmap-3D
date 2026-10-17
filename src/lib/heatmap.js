@@ -37,7 +37,33 @@ export function createHeatmap(container, initialOptions = {}) {
   const fill = { position: 'absolute', inset: '0', display: 'block', width: '100%', height: '100%', touchAction: 'none' };
   Object.assign(renderer.domElement.style, fill);
   container.appendChild(renderer.domElement);
+  if (initialOptions.shadowMapSize) renderer.shadowMap.type = THREE.PCFShadowMap; // cheaper filtering where the map is small
 
+  // zoom: 'pinch' leaves plain scrolling to the page, so a full-screen view never traps the scroll.
+  // Trackpad pinches (ctrl + wheel) and two-finger touches still zoom the model, never the page.
+  // (registered before OrbitControls so it can keep plain wheel events from reaching them)
+  const canvas = renderer.domElement;
+  canvas.addEventListener('wheel', (e) => opts.zoom === 'pinch' && !e.ctrlKey && e.stopImmediatePropagation(), { passive: true });
+  canvas.addEventListener('touchmove', (e) => opts.zoom && opts.interactive && e.touches.length > 1 && e.preventDefault(), { passive: false });
+  // Safari reports trackpad pinches as gesture events rather than ctrl + wheel
+  let gestureScale = 1;
+  let touches = 0;
+  canvas.addEventListener('touchstart', (e) => (touches = e.touches.length), { passive: true });
+  canvas.addEventListener('touchend', (e) => (touches = e.touches.length), { passive: true });
+  canvas.addEventListener('gesturestart', (e) => {
+    if (!opts.zoom || !opts.interactive) return;
+    e.preventDefault();
+    gestureScale = 1;
+  });
+  canvas.addEventListener('gesturechange', (e) => {
+    if (!opts.zoom || !opts.interactive) return;
+    e.preventDefault();
+    if (touches) return; // touch pinches are handled by OrbitControls
+    const offset = camera.position.clone().sub(controls.target);
+    const d = THREE.MathUtils.clamp((offset.length() * gestureScale) / e.scale, controls.minDistance, controls.maxDistance);
+    camera.position.copy(controls.target).add(offset.setLength(d));
+    gestureScale = e.scale;
+  });
 
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog('#000', 90, 180);
@@ -55,7 +81,8 @@ export function createHeatmap(container, initialOptions = {}) {
   scene.add(hemi);
   const sun = new THREE.DirectionalLight('#ffffff', 2.2);
   sun.position.set(-20, 40, 25);
-  sun.shadow.mapSize.set(2048, 2048);
+  const shadowMap = initialOptions.shadowMapSize ?? 2048;
+  sun.shadow.mapSize.set(shadowMap, shadowMap);
   Object.assign(sun.shadow.camera, { left: -52, right: 52, top: 26, bottom: -26, near: 1, far: 140 });
   sun.shadow.bias = -0.0005;
   scene.add(sun);
@@ -140,10 +167,10 @@ export function createHeatmap(container, initialOptions = {}) {
   }
 
   function applyLiveOptions() {
-    controls.autoRotate = opts.autoRotate;
+    controls.autoRotate = opts.autoRotate && !intro;
     controls.autoRotateSpeed = opts.rotateSpeed;
     controls.enabled = opts.interactive;
-    controls.enableZoom = opts.zoom;
+    controls.enableZoom = Boolean(opts.zoom);
     const shadows = opts.shadows && styleDef.shadows !== false;
     sun.castShadow = shadows;
     style?.setShadows?.(shadows);
@@ -203,6 +230,19 @@ export function createHeatmap(container, initialOptions = {}) {
     style = built;
     style.resize?.(size.w, size.h);
     applyLiveOptions();
+    markReady();
+  }
+
+  // Resolves once the current style has finished building (styles with assets build asynchronously).
+  let readyPromise = null;
+  let resolveReady = null;
+  function whenReady() {
+    if (style) return Promise.resolve();
+    return (readyPromise ||= new Promise((r) => (resolveReady = r)));
+  }
+  function markReady() {
+    resolveReady?.();
+    readyPromise = resolveReady = null;
   }
 
   // ---------- camera ----------
@@ -214,12 +254,54 @@ export function createHeatmap(container, initialOptions = {}) {
     return Math.max(base * 0.7, Math.min(180, halfWidth / Math.tan(hfov / 2)));
   }
 
+  function homePosition() {
+    if (opts.camera) return new THREE.Vector3().fromArray(opts.camera);
+    return new THREE.Vector3().fromArray(styleDef.camera?.dir ?? [-18, 32, 52]).normalize().multiplyScalar(fitDistance());
+  }
+
   function resetView() {
-    if (opts.camera) camera.position.fromArray(opts.camera);
-    else camera.position.fromArray(styleDef.camera?.dir ?? [-18, 32, 52]).normalize().multiplyScalar(fitDistance());
+    intro = null;
+    camera.position.copy(homePosition());
     controls.target.set(0, 0, 0);
     controls.update();
   }
+
+  // The intro: the camera starts straight above the board (where it reads like the flat
+  // GitHub graph) and swings down to its usual angle while the style grows in again.
+  // `span` is the fraction of the view's width the board covers at the start.
+  let intro = null;
+  function playIntro({ duration = 1900, span = 0.83 } = {}) {
+    const boardWidth = styleDef.camera?.boardWidth ?? 53;
+    const hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect);
+    const from = new THREE.Spherical(Math.min(400, boardWidth / span / 2 / Math.tan(hfov / 2)), 0.02, 0);
+    const to = new THREE.Spherical().setFromVector3(homePosition());
+    intro = { start: performance.now(), duration, from, to };
+    controls.target.set(0, 0, 0);
+    camera.position.setFromSpherical(from);
+    controls.autoRotate = false;
+    style?.replay?.();
+  }
+  function stepIntro(now) {
+    const t = Math.min(1, (now - intro.start) / intro.duration);
+    const e = t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2; // ease in-out
+    const { from, to } = intro;
+    camera.position.setFromSpherical(
+      new THREE.Spherical(
+        THREE.MathUtils.lerp(from.radius, to.radius, e),
+        THREE.MathUtils.lerp(from.phi, to.phi, e),
+        THREE.MathUtils.lerp(from.theta, to.theta, e),
+      ),
+    );
+    if (t >= 1) {
+      intro = null;
+      controls.autoRotate = opts.autoRotate;
+    }
+  }
+  controls.addEventListener('start', () => {
+    if (!intro) return;
+    intro = null; // the user grabbed the model: hand over the camera
+    controls.autoRotate = opts.autoRotate;
+  });
 
   // ---------- sizing ----------
   function resize() {
@@ -303,8 +385,13 @@ export function createHeatmap(container, initialOptions = {}) {
   }
 
   // ---------- loop ----------
+  let lastRender = 0;
   function frame(now) {
+    // maxFps: skip frames on high-refresh screens and phones, where every frame costs heat
+    if (opts.maxFps && now - lastRender < 1000 / opts.maxFps - 4) return;
+    lastRender = now;
     style?.update(now);
+    if (intro) stepIntro(now);
     controls.update();
     // fog only softens the far edge of the board, however far away the camera is
     const dist = camera.position.length();
@@ -324,7 +411,8 @@ export function createHeatmap(container, initialOptions = {}) {
   // Only render while the view is on screen and the tab is visible.
   let onScreen = true;
   let destroyed = false;
-  const syncLoop = () => renderer.setAnimationLoop(!destroyed && onScreen && !document.hidden ? frame : null);
+  let paused = false;
+  const syncLoop = () => renderer.setAnimationLoop(!destroyed && !paused && onScreen && !document.hidden ? frame : null);
   const visibility = new IntersectionObserver(([entry]) => {
     onScreen = entry.isIntersecting;
     syncLoop();
@@ -365,7 +453,20 @@ export function createHeatmap(container, initialOptions = {}) {
       if (REBUILD_KEYS.some(changed)) build(!changed('style'));
       else if (IN_PLACE_KEYS.some(changed)) style?.setOptions?.(opts);
       if (changed('camera') || changed('style')) resetView();
+      if (changed('maxPixelRatio')) {
+        renderer.setPixelRatio(Math.min(devicePixelRatio, opts.maxPixelRatio ?? 2));
+        resize();
+      }
       applyLiveOptions();
+    },
+    /** Swing the camera down from straight above while the style grows in again. */
+    intro: playIntro,
+    /** Resolves when the current style has finished building. */
+    ready: whenReady,
+    /** Stop (or resume) rendering, e.g. while the view is covered. */
+    setPaused(p) {
+      paused = p;
+      syncLoop();
     },
     reload: load,
     resetView,

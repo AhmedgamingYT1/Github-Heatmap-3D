@@ -10,6 +10,8 @@ import { THEMES } from './lib/themes.js';
 import { FOREST_PALETTES } from './lib/styles/forest.js';
 import { composeSong, createSongPlayer } from './lib/song.js';
 import { renderChartSvg } from './lib/charts.js';
+import { renderSvg } from './lib/svg.js';
+import { defaults } from './lib/options.js';
 
 // The landing page shows a built-in demo year (every month filled), labelled as yours.
 const HERO_USER = 'you';
@@ -22,18 +24,36 @@ const GLOWS = new Set(['night', 'galaxy']);
 const PAGE_DARK = '#08080a'; // = --bg in dark mode, so the scene has no visible edge
 const isLight = () => document.documentElement.dataset.mode === 'light';
 
+// Phones get lighter scenes: forests are the heaviest thing on the page.
+const MOBILE = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
+
+// The colors picked in the dock. City's null = GitHub's own green, following light/dark.
+const colors = { city: null, forest: 'spring' };
+const cityTheme = () => colors.city ?? (isLight() ? 'github-light' : 'github');
+
 // How the hero shows a style in the current mode. Forests grow bigger here, on a log
 // scale, so even quiet days become real trees and it reads as a full forest.
 function heroOptions(style) {
   const glow = GLOWS.has(style);
+  const forest = style === 'forest';
   return {
     style,
+    theme: cityTheme(),
+    palette: colors.forest,
     transparent: !glow,
     background: glow && !isLight() ? PAGE_DARK : undefined,
-    height: style === 'forest' ? 15 : 8,
-    log: style === 'forest',
+    height: forest ? 15 : 8,
+    log: forest,
+    ...phoneTuning(style),
   };
 }
+// On phones the forest draws at a lower resolution, without shadows, at 30 fps.
+function phoneTuning(style) {
+  if (!MOBILE) return {};
+  const forest = style === 'forest';
+  return { maxPixelRatio: forest ? 1 : 1.5, maxFps: forest ? 30 : 60, shadows: !forest };
+}
+const PERF = { maxFps: 60, detail: MOBILE ? 'low' : 'high', shadowMapSize: MOBILE ? 1024 : 2048 };
 const daysPromise = Promise.resolve(demoContributions(YEAR));
 
 // Vertical swipes scroll the page on phones; horizontal drags still spin the model.
@@ -44,50 +64,186 @@ function studioUrl(params) {
   const q = new URLSearchParams({ ...(user ? { user } : {}), ...params });
   return `/studio.html?${q}`;
 }
+const heroStudioParams = () =>
+  heroStyle === 'city' ? { style: 'city', theme: cityTheme() } : heroStyle === 'forest' ? { style: 'forest', palette: colors.forest } : { style: heroStyle };
 
 // ---------- hero ----------
-let heroStyle = 'night';
-$('heroWho').textContent = 'your year…';
+// Every world starts as the flat graph GitHub shows, then tips back and grows into 3D.
+let heroStyle = 'city';
+const view = $('heroView');
 const hero = createHeatmap($('heroStage'), {
   ...DEMO,
   year: YEAR,
-  theme: 'sand',
   ...heroOptions(heroStyle),
-  zoom: false,
+  zoom: 'pinch', // pinch to zoom; a plain scroll still scrolls the page
   rotateSpeed: 0.45,
   maxPixelRatio: 1.5,
+  ...PERF,
 });
 allowPageScroll($('heroStage'));
 if (import.meta.env.DEV) window.__hero = hero; // for debugging
-hero.on('load', () => ($('heroHint').hidden = true));
+hero.setPaused(true); // nothing to draw until the graph turns 3D
 hero.on('building', () => {
   $('heroHint').textContent = 'Growing the forest…';
   $('heroHint').hidden = false;
 });
 hero.on('built', () => ($('heroHint').hidden = true));
 
+// the flat graph
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const flat = $('heroFlat');
+let flatCols = 53;
+daysPromise.then((days) => {
+  const offset = new Date(days[0].date + 'T00:00:00Z').getUTCDay();
+  flatCols = Math.ceil((days.length + offset) / 7);
+  flat.style.setProperty('--cols', flatCols);
+  $('ghTotal').textContent = days.reduce((n, d) => n + d.count, 0).toLocaleString('en-US');
+  const pad = '<i class="pad"></i>'.repeat(offset);
+  $('ghGrid').innerHTML = pad + days.map((d, i) => `<i data-l="${d.level}" style="--c:${Math.floor((i + offset) / 7)}"></i>`).join('');
+  let last = -1;
+  $('ghMonths').innerHTML = days
+    .map((d, i) => {
+      const m = Number(d.date.slice(5, 7)) - 1;
+      const col = Math.floor((i + offset) / 7);
+      if (m === last || (i + offset) % 7 !== 0 || col > flatCols - 3) return '';
+      last = m;
+      return `<span style="grid-column:${col + 1}">${MONTHS[m]}</span>`;
+    })
+    .join('');
+  sizeFlat();
+});
+// Size the squares to the space, and return how much of the view's width the grid covers,
+// so the 3D board can start out at exactly that size.
+function sizeFlat() {
+  const w = view.clientWidth;
+  // leave the gutters (and the color dock, beside it on wide screens), then the card's padding and weekday labels
+  const room = Math.min(w - (w < 760 ? 32 : 200), 1040) - (w < 560 ? 24 : 72);
+  const pitch = Math.max(5, Math.min(22, room / flatCols));
+  const gap = Math.max(1, Math.round(pitch * 0.2));
+  flat.style.setProperty('--cell', `${(pitch - gap).toFixed(2)}px`);
+  flat.style.setProperty('--gap', `${gap}px`);
+  flat.classList.toggle('tiny', pitch < 9);
+  return (pitch * flatCols) / w;
+}
+function flatColors() {
+  // night-time worlds come from GitHub's dark mode; the others match the page
+  flat.toggleAttribute('data-dark', GLOWS.has(heroStyle) || !isLight());
+}
+function popFlat() {
+  flat.classList.remove('play');
+  void flat.offsetWidth; // restart the squares' animation
+  flat.classList.add('play');
+}
+
+// 2D or 3D: what the toggle says. Choosing a world always passes through 2D first.
+let wanted = '3d';
+let seq = 0;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function setView(v) {
+  view.dataset.view = v;
+  if (v === '3d') {
+    hero.setPaused(false);
+    hero.intro({ span: sizeFlat() });
+  } else {
+    setTimeout(() => view.dataset.view === '2d' && hero.setPaused(true), 600); // once it has faded
+  }
+}
+async function present({ hold = 1100 } = {}) {
+  const my = ++seq;
+  flatColors();
+  if (view.dataset.view !== '2d') setView('2d');
+  popFlat();
+  await sleep(hold);
+  await hero.ready();
+  if (my === seq && wanted === '3d') setView('3d');
+}
+
 const seg = $('heroStyles');
-const glider = seg.querySelector('.seg-glider');
-function moveGlider() {
-  const on = seg.querySelector('[aria-checked="true"]');
+function moveGlider(group = seg) {
+  const on = group.querySelector('[aria-checked="true"]');
+  const glider = group.querySelector('.seg-glider');
   glider.style.width = `${on.offsetWidth}px`;
   glider.style.transform = `translateX(${on.offsetLeft}px)`;
 }
+function selectStyle(style) {
+  if (style === heroStyle) return;
+  heroStyle = style;
+  for (const x of seg.querySelectorAll('button')) x.setAttribute('aria-checked', x.dataset.style === style);
+  moveGlider();
+  hero.setPaused(true); // freeze the old world while it fades out
+  applyHero();
+  renderDock();
+  present({ hold: 900 });
+}
 seg.addEventListener('click', (e) => {
   const b = e.target.closest('button[data-style]');
-  if (!b || b.dataset.style === heroStyle) return;
-  heroStyle = b.dataset.style;
-  for (const x of seg.querySelectorAll('button')) x.setAttribute('aria-checked', x === b);
-  moveGlider();
-  applyHero();
-  $('navStudio').href = studioUrl({ style: heroStyle });
+  if (b) selectStyle(b.dataset.style);
+});
+
+const toggle = $('viewToggle');
+function syncToggle() {
+  for (const x of toggle.querySelectorAll('button')) x.setAttribute('aria-checked', x.dataset.view === wanted);
+  moveGlider(toggle);
+}
+toggle.addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-view]');
+  if (!b || b.dataset.view === wanted) return;
+  wanted = b.dataset.view;
+  syncToggle();
+  const my = ++seq;
+  if (wanted === '2d') {
+    flatColors();
+    setView('2d');
+    popFlat();
+  } else {
+    await hero.ready();
+    if (my === seq) setView('3d');
+  }
 });
 
 function applyHero() {
   hero.setOptions(heroOptions(heroStyle));
   // light page + night-time world: present it on a dark screen
-  $('heroStage').toggleAttribute('data-card', isLight() && GLOWS.has(heroStyle));
+  view.toggleAttribute('data-card', isLight() && GLOWS.has(heroStyle));
+  $('navStudio').href = studioUrl(heroStudioParams());
 }
+
+// ---------- the color dock: try the themes on the hero ----------
+const CITY_COLORS = Object.entries(THEMES)
+  .filter(([, t]) => !t.hidden)
+  .map(([id, t]) => ({ id, name: t.name, a: t.levels[1], b: t.levels[4] }));
+const FOREST_COLORS = Object.entries(FOREST_PALETTES).map(([id, p]) => ({ id, name: `Forest ${p.name}`, a: p.levels[1], b: p.levels[4] }));
+const swatch = (c, on) =>
+  `<button type="button" role="radio" data-color="${c.id}" aria-checked="${on}" aria-label="${c.name}" title="${c.name}" style="--a:${c.a};--b:${c.b}"></button>`;
+
+function renderDock() {
+  const list = heroStyle === 'city' ? CITY_COLORS : heroStyle === 'forest' ? FOREST_COLORS : null;
+  $('colorDock').hidden = !list; // night city and galaxy have their own fixed colors
+  if (!list) return;
+  const current = heroStyle === 'city' ? cityTheme() : colors.forest;
+  $('colorList').innerHTML = list.map((c) => swatch(c, c.id === current)).join('');
+}
+function pickColor(style, id) {
+  if (style === 'city') colors.city = id;
+  else colors.forest = id;
+  if (heroStyle !== style) {
+    selectStyle(style);
+    return;
+  }
+  applyHero();
+  renderDock();
+  if (wanted === '2d') {
+    // they want to see the colors: show the model
+    wanted = '3d';
+    syncToggle();
+    hero.ready().then(() => setView('3d'));
+  }
+}
+$('colorList').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-color]');
+  if (b) pickColor(heroStyle, b.dataset.color);
+});
+renderDock();
 
 // ---------- light / dark ----------
 $('modeToggle').addEventListener('click', () => {
@@ -96,17 +252,31 @@ $('modeToggle').addEventListener('click', () => {
   try {
     localStorage.setItem('mode', mode);
   } catch {}
+  // GitHub's green follows the page between its light and dark versions
+  if (colors.city === 'github' || colors.city === 'github-light') colors.city = null;
   applyHero();
+  flatColors();
+  renderDock();
   daysPromise.then(renderFeatureArt);
 });
-$('heroStage').toggleAttribute('data-card', isLight() && GLOWS.has(heroStyle));
-addEventListener('resize', moveGlider);
-document.fonts?.ready.then(moveGlider);
+applyHero();
+flatColors();
+addEventListener('resize', () => {
+  moveGlider();
+  moveGlider(toggle);
+  sizeFlat();
+});
+document.fonts?.ready.then(() => {
+  moveGlider();
+  moveGlider(toggle);
+});
 moveGlider();
+syncToggle();
+present({ hold: 1400 }); // the first look: GitHub's graph, then it rises
 
 $('tryForm').addEventListener('submit', (e) => {
   e.preventDefault();
-  location.href = studioUrl({ style: heroStyle });
+  location.href = studioUrl(heroStudioParams());
 });
 
 // ---------- explore: expanding cards open a live viewer ----------
@@ -128,7 +298,7 @@ function openViewer(key) {
   $('viewerHint').hidden = false;
   viewer.showModal();
   if (!viewerMap) {
-    viewerMap = createHeatmap($('viewerStage'), { ...DEMO, year: YEAR, rotateSpeed: 0.6, maxPixelRatio: 1.5, ...w.opts });
+    viewerMap = createHeatmap($('viewerStage'), { ...DEMO, year: YEAR, rotateSpeed: 0.6, maxPixelRatio: 1.5, ...PERF, ...phoneTuning(w.opts.style), ...w.opts });
     viewerMap.on('load', () => ($('viewerHint').hidden = true));
     viewerMap.on('built', () => ($('viewerHint').hidden = true));
     viewerMap.on('building', () => {
@@ -136,7 +306,7 @@ function openViewer(key) {
       $('viewerHint').hidden = false;
     });
   } else {
-    viewerMap.setOptions({ palette: 'spring', theme: 'sand', height: 8, log: false, ...w.opts });
+    viewerMap.setOptions({ palette: 'spring', theme: 'sand', height: 8, log: false, ...phoneTuning(w.opts.style), ...w.opts });
     $('viewerHint').hidden = w.opts.style !== 'forest';
   }
 }
@@ -187,6 +357,10 @@ function renderFeatureArt(days) {
   $('cardArt').innerHTML = renderChartSvg('card', days, { user: HERO_USER, theme });
   $('donutArt').innerHTML = renderChartSvg('donut', days, { user: HERO_USER, theme });
 }
+// your year as a single-color 3D print
+daysPromise.then((days) => {
+  $('printArt').innerHTML = renderSvg(days, { ...defaults(), theme: 'print', transparent: true, labels: false, title: false, height: 12, angle: -24, tilt: 38 });
+});
 daysPromise.then(renderFeatureArt);
 
 const embed = `<iframe src="${location.origin}/embed.html?user=you&style=galaxy"\n  style="width:100%;height:420px;border:0"></iframe>`;
@@ -205,12 +379,18 @@ $('copyEmbed').addEventListener('click', async () => {
   setTimeout(() => ($('copyEmbed').textContent = 'Copy'), 1400);
 });
 
+// the same swatches as the hero's dock: tap one to see it up there
 $('swatches').innerHTML = [
-  ...Object.values(THEMES).filter((t) => !t.hidden).map((t) => [t.name, t.background, t.levels[3]]),
-  ...Object.values(FOREST_PALETTES).map((p) => [`Forest ${p.name}`, p.levels[1], p.levels[4]]),
-]
-  .map(([name, a, b]) => `<i title="${name}" style="--a:${a};--b:${b}"></i>`)
-  .join('');
+  ...CITY_COLORS.map((c) => swatch({ ...c, id: `city:${c.id}` }, false)),
+  ...FOREST_COLORS.map((c) => swatch({ ...c, id: `forest:${c.id}` }, false)),
+].join('');
+$('swatches').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-color]');
+  if (!b) return;
+  const [style, id] = b.dataset.color.split(':');
+  scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  pickColor(style, id);
+});
 
 // count numbers up when they scroll into view
 const counter = new IntersectionObserver((entries) => {
