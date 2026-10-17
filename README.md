@@ -11,7 +11,7 @@ Every day is a bar whose height matches that day's contribution count.
 | **City** | One bar per day, as tall as that day's contributions. 8 color themes. |
 | **Night City** (Pro) | The city after dark: lit windows, rooftop lights and stars. |
 | **Galaxy** (Pro) | A spiral galaxy from January at the core to December at the rim. Every day is a star; the biggest days are planets. |
-| **Forest** (Pro) | A floating island where each day grows a plant: sprouts for quiet days, big trees (some in bloom) for big ones. |
+| **Forest** (Pro) | An island with a realistic tree for every day: oak, ash, aspen and pine, as tall as the day's contributions, with bushes for quiet days. Four leaf palettes: Spring (greens with pink blossoms on the busiest days), Autumn, Sakura and Dream. |
 | **Heartbeat** (Pro) | A heart monitor sweeping through the year, one beat per day. |
 
 ## Your year as a song (Pro)
@@ -68,6 +68,7 @@ The same names work as URL params (`?autoRotate=0`), script attributes (`data-au
 | `user` | – | GitHub username (sample data when empty) |
 | `year` | current year | 2008 to now |
 | `style` | `city` | `city`, `night`, `galaxy`, `forest`, `heartbeat` |
+| `palette` | `spring` | Forest leaf colors: `spring`, `autumn`, `sakura`, `dream` |
 | `theme` | `sand` | City colors: `sand`, `ocean`, `github`, `github-light`, `sunset`, `forest`, `neon`, `halloween` |
 | `height` | `8` | Height of the tallest bar (2–20) |
 | `log` | `0` | Log scale, so quiet days stay visible next to busy ones |
@@ -121,4 +122,4 @@ src/lib/data.js             contribution data + stats
 
 Contributions come from the public [github-contributions-api](https://github.com/grubersjoe/github-contributions-api), which reads public profile calendars (no token needed). Private contributions only appear if the user has turned on "Include private contributions" on their GitHub profile.
 
-Built with [Three.js](https://threejs.org) and [Vite](https://vite.dev).
+Built with [Three.js](https://threejs.org) and [Vite](https://vite.dev). Forest trees are generated with [EZ-Tree](https://github.com/dgreenheck/ez-tree) by Daniel Greenheck (MIT); its bark textures come from [Poly Haven](https://polyhaven.com) and [TextureCan](https://www.texturecan.com) (CC0).
