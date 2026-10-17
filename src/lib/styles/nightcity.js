@@ -186,10 +186,10 @@ export function createNightCity(ctx) {
   // stars
   const stars = new THREE.BufferGeometry();
   const starPos = [];
-  for (let k = 0; k < 1800; k++) {
+  for (let k = 0; k < 3000; k++) {
     const a = hash(k) * Math.PI * 2;
-    const e = Math.asin(hash(k + 9000) * 0.95);
-    starPos.push(Math.cos(a) * Math.cos(e) * 160, Math.sin(e) * 160 - 10, Math.sin(a) * Math.cos(e) * 160);
+    const e = Math.asin(hash(k + 9000) * 2 - 1); // the whole sky, below the city too
+    starPos.push(Math.cos(a) * Math.cos(e) * 160, Math.sin(e) * 160, Math.sin(a) * Math.cos(e) * 160);
   }
   stars.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
   board.add(new THREE.Points(stars, new THREE.PointsMaterial({ size: 1.1, map: glowTex(), color: '#cfd8ff', transparent: true, depthWrite: false, fog: false })));

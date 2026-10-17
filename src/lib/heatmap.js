@@ -79,20 +79,10 @@ export function createHeatmap(container, initialOptions = {}) {
   let composer = null;
   let bloomPass = null;
 
+  injectTooltipStyles();
   const tooltip = document.createElement('div');
-  Object.assign(tooltip.style, {
-    position: 'absolute',
-    pointerEvents: 'none',
-    background: '#1f2328',
-    color: '#fff',
-    padding: '6px 10px',
-    borderRadius: '6px',
-    font: '12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-    whiteSpace: 'nowrap',
-    transform: 'translate(-50%, calc(-100% - 12px))',
-    zIndex: 3,
-    display: 'none',
-  });
+  tooltip.className = 'hm-tip';
+  tooltip.setAttribute('role', 'status');
   container.appendChild(tooltip);
 
   // ---------- state ----------
@@ -125,9 +115,11 @@ export function createHeatmap(container, initialOptions = {}) {
     applyBackground();
   }
 
+  // `background` (not a URL option) lets a page match the scene to its own color exactly.
   function applyBackground() {
-    scene.background = opts.transparent ? null : new THREE.Color(theme.background);
-    scene.fog.color.set(theme.background);
+    const color = opts.background || theme.background;
+    scene.background = opts.transparent ? null : new THREE.Color(color);
+    scene.fog.color.set(color);
   }
 
   function useBloom() {
@@ -267,22 +259,30 @@ export function createHeatmap(container, initialOptions = {}) {
   function updateHover() {
     if (!style || !pointerInside || !opts.tooltip) {
       setHovered(-1);
-      tooltip.style.display = 'none';
+      tooltip.classList.remove('on');
       return;
     }
     raycaster.setFromCamera(pointer, camera);
     const i = style.pick(raycaster);
     setHovered(i);
     if (i < 0) {
-      tooltip.style.display = 'none';
+      tooltip.classList.remove('on');
       return;
     }
     const day = days[i];
     const n = day.count;
-    tooltip.textContent = `${n === 0 ? 'No' : n} contribution${n === 1 ? '' : 's'} on ${fmtDate(day.date)}`;
+    if (tooltip.dataset.day !== day.date) {
+      tooltip.dataset.day = day.date;
+      const max = Math.max(...days.map((d) => d.count));
+      const tag = n === 0 ? 'Rest day' : n === max ? 'Best day of the year' : '';
+      tooltip.innerHTML =
+        `<span class="hm-tip-date"><i style="background:${theme.levels[day.level]}"></i>${fmtDate(day.date)}</span>` +
+        `<span class="hm-tip-n"><b>${n}</b> contribution${n === 1 ? '' : 's'}</span>` +
+        (tag ? `<span class="hm-tip-tag">${tag}</span>` : '');
+    }
     tooltip.style.left = `${pointerPx.x}px`;
     tooltip.style.top = `${pointerPx.y}px`;
-    tooltip.style.display = 'block';
+    tooltip.classList.add('on');
   }
 
   // ---------- data ----------
@@ -409,6 +409,32 @@ export function createHeatmap(container, initialOptions = {}) {
       tooltip.remove();
     },
   };
+}
+
+// The hover card. Plain CSS injected once, so any page that embeds the component gets it.
+function injectTooltipStyles() {
+  if (document.getElementById('hm-tip-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'hm-tip-styles';
+  style.textContent = `
+.hm-tip {
+  position: absolute; z-index: 3; pointer-events: none; display: grid; gap: 4px; min-width: 150px;
+  padding: 10px 12px 11px; border-radius: 14px; color: #f4f4f6;
+  background: rgba(16, 16, 20, 0.82); border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font: 12px/1.35 'Geist Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  white-space: nowrap; opacity: 0; transform: translate(-50%, calc(-100% - 6px)) scale(0.96);
+  transition: opacity 0.15s ease, transform 0.18s cubic-bezier(.2,.8,.2,1);
+}
+.hm-tip.on { opacity: 1; transform: translate(-50%, calc(-100% - 14px)) scale(1); }
+.hm-tip-date { display: flex; align-items: center; gap: 7px; color: #a3a3ad; font-size: 11.5px; }
+.hm-tip-date i { width: 9px; height: 9px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15); }
+.hm-tip-n { color: #c9c9d1; }
+.hm-tip-n b { font-size: 20px; font-weight: 650; color: #fff; letter-spacing: -0.02em; margin-right: 3px; font-variant-numeric: tabular-nums; }
+.hm-tip-tag { justify-self: start; margin-top: 2px; padding: 3px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 600; color: #ffd8b0; background: rgba(242, 166, 94, 0.16); }
+`;
+  document.head.appendChild(style);
 }
 
 export function fmtDate(iso, opts = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) {
