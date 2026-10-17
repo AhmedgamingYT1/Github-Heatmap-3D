@@ -69,6 +69,7 @@ The same names work as URL params (`?autoRotate=0`), script attributes (`data-au
 | Option | Default | Description |
 |---|---|---|
 | `user` | – | GitHub username (sample data when empty) |
+| `demo` | `0` | Show the built-in demo year (every month filled) instead of fetching `user` |
 | `year` | current year | 2008 to now |
 | `style` | `city` | `city`, `night`, `galaxy`, `forest` |
 | `palette` | `spring` | Forest leaf colors: `spring`, `autumn`, `sakura`, `dream` |
