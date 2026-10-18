@@ -28,7 +28,7 @@ function loadClerk() {
     // Clerk's UI is bundled with the site rather than fetched from Clerk's CDN at run time
     const [{ Clerk }, { ui }] = await Promise.all([import('@clerk/clerk-js'), import('@clerk/ui')]);
     const clerk = new Clerk(KEY);
-    await clerk.load({ ui: { ClerkUI: ui.ClerkUI }, appearance: { variables: { borderRadius: '14px' } } });
+    await clerk.load({ ui: { ClerkUI: ui.ClerkUI }, telemetry: false, appearance: { variables: { borderRadius: '14px' } } });
     clerk.addListener(({ user }) => sync(user));
     if (import.meta.env.DEV) window.__clerk = clerk; // for testing sign-in locally
     return clerk;
