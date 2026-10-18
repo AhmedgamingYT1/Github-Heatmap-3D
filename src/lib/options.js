@@ -27,6 +27,7 @@ export const OPTIONS = {
   transparent: { type: 'bool', default: false }, // no background, for embedding on any page
   camera: { type: 'vec3', default: null }, // saved view, e.g. "-18,32,52"
   badge: { type: 'bool', default: true }, // small "open in 3D" link on embeds
+  key: { type: 'string', default: '' }, // proof of purchase for a Pro world in an embed (from /api/embed-key)
   // README image (SVG) only
   type: { type: 'string', default: '3d' }, // 3d, or a 2D design: card, donut, months, calendar
   // the camera's angle around and above the board, in degrees
