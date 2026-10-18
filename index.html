@@ -176,11 +176,17 @@
           </div>
           <div class="use-panel" data-use="link" role="tabpanel">
             <div class="use-demo">
-              <div class="chat">
-                <div class="bubble">Wrapped up my year. Have a look!</div>
-                <div class="bubble link-card">
-                  <div class="link-img" style="--img: url(/previews/night.jpg)"></div>
-                  <div class="link-text"><b>@you · 2026 in 3D</b><span>github-heatmap-3d.vercel.app</span></div>
+              <div class="phone" aria-hidden="true">
+                <div class="phone-top"><span class="phone-back">‹</span><span class="phone-avatar">S</span><b>Sam</b></div>
+                <div class="phone-thread">
+                  <div class="msg in">How did your year go?</div>
+                  <div class="msg out">Busy! Here it is, every day of it</div>
+                  <div class="msg out link-card">
+                    <div class="link-img" style="--img: url(/previews/night.jpg)"><span class="link-play">3D</span></div>
+                    <div class="link-text"><b>@you · 2026 in 3D</b><span>Night City · 3,182 contributions</span><small>github-heatmap-3d.vercel.app</small></div>
+                  </div>
+                  <span class="msg-meta">Delivered</span>
+                  <div class="msg in">Wait, I can spin it?!</div>
                 </div>
               </div>
             </div>
@@ -191,12 +197,25 @@
                 <div class="code-top"><span class="dots3" aria-hidden="true"><i></i><i></i><i></i></span><span>link</span><button type="button" class="copy" data-copy="linkCode">Copy</button></div>
                 <pre id="linkCode"></pre>
               </div>
+              <div class="link-parts" aria-label="What the link remembers"><span><b>user</b>you</span><span><b>style</b>night</span><span><b>theme</b>your colors</span><span><b>camera</b>your angle</span></div>
               <ul class="ticks"><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Opens straight into the live 3D view</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Remembers your world, colors and angle</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>No account needed to view</li></ul>
             </div>
           </div>
           <div class="use-panel" data-use="print" role="tabpanel">
-            <div class="use-demo">
-              <div class="print"><div class="print-model" id="printArt" aria-hidden="true"></div><span class="print-chip">.STL</span></div>
+            <div class="use-demo print-demo">
+              <div class="bed" aria-hidden="true">
+                <div class="bed-plate"></div>
+                <div class="print-model" id="printArt"></div>
+              </div>
+              <div class="filament" id="filament" role="radiogroup" aria-label="Filament color">
+                <span>Filament</span>
+                <button type="button" role="radio" data-filament="orange" aria-checked="true" style="--f:#ef9459" aria-label="Orange"></button>
+                <button type="button" role="radio" data-filament="white" aria-checked="false" style="--f:#f1efe9" aria-label="White"></button>
+                <button type="button" role="radio" data-filament="black" aria-checked="false" style="--f:#2b2b30" aria-label="Black"></button>
+                <button type="button" role="radio" data-filament="green" aria-checked="false" style="--f:#40c463" aria-label="Green"></button>
+                <button type="button" role="radio" data-filament="blue" aria-checked="false" style="--f:#4fb0dc" aria-label="Blue"></button>
+              </div>
+              <div class="stl-file"><span class="stl-icon">STL</span><span><b>you-2026-contributions.stl</b><small>One solid · Z-up · ready to slice</small></span></div>
             </div>
             <div class="use-info">
               <h3>Your year on your desk</h3>
@@ -225,7 +244,7 @@
       <div class="plan-views" id="expand">
         <div class="plan-view on" data-plan="free" role="tabpanel">
           <article class="show ">
-            <button type="button" class="show-media" data-open="city" style="--img: url(/previews/city.jpg)" aria-label="Open City live"><span class="show-live">Open it live <i aria-hidden="true">↗</i></span></button>
+            <div class="show-media mosaic" id="cityMosaic" aria-label="The City in every theme"></div>
             <div class="show-info">
               <span class="show-tag free">Free forever</span>
               <h3>City</h3>

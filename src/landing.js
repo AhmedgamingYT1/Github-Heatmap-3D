@@ -309,13 +309,14 @@ const WORLDS = {
   galaxy: { title: 'Galaxy', kicker: 'Pro · 3D', opts: { style: 'galaxy' } },
   forest: { title: 'Forest', kicker: 'Pro · 3D', opts: { style: 'forest', palette: 'spring', height: 15, log: true } },
   sakura: { title: 'Forest · Sakura', kicker: 'Pro · 3D', opts: { style: 'forest', palette: 'sakura', height: 15, log: true } },
-  city: { title: 'City', kicker: 'Free · 3D', opts: { style: 'city', theme: 'sand' } },
+  city: { title: 'City', kicker: 'Free · 3D', opts: { style: 'city', theme: 'github-light' } },
 };
 
 const viewer = $('viewer');
 let viewerMap = null;
-function openViewer(key) {
-  const w = WORLDS[key];
+function openViewer(key, extra = {}) {
+  const base = WORLDS[key];
+  const w = { ...base, opts: { ...base.opts, ...extra } };
   $('viewerTitle').textContent = w.title;
   $('viewerKicker').textContent = w.kicker;
   $('viewerStudio').href = studioUrl(w.opts);
@@ -386,9 +387,60 @@ function renderFeatureArt(days) {
   $('cardArt').innerHTML = renderChartSvg('card', days, { user: HERO_USER, theme });
   $('donutArt').innerHTML = renderChartSvg('donut', days, { user: HERO_USER, theme });
 }
-// your year as a single-color 3D print
-daysPromise.then((days) => {
-  $('printArt').innerHTML = renderSvg(days, { ...defaults(), theme: 'print', transparent: true, labels: false, title: false, height: 12, angle: -24, tilt: 38 });
+// tap a theme to recolor the cards in this section
+$('swatches').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-color]');
+  if (!b) return;
+  featureTheme = b.dataset.color;
+  daysPromise.then(renderFeatureArt);
+});
+
+// your year as a 3D print, in the filament you pick
+const FILAMENTS = { orange: '#ef9459', white: '#f1efe9', black: '#3a3a40', green: '#40c463', blue: '#4fb0dc' };
+function renderPrint(days, filament = 'orange') {
+  const c = FILAMENTS[filament];
+  const colors = { plinth: c, levels: [c, c, c, c, c] };
+  $('printArt').innerHTML = renderSvg(days, { ...defaults(), theme: 'print', colors, transparent: true, labels: false, title: false, height: 12, angle: -24, tilt: 38 });
+}
+daysPromise.then((days) => renderPrint(days));
+$('filament').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-filament]');
+  if (!b) return;
+  for (const x of $('filament').querySelectorAll('button')) x.setAttribute('aria-checked', x === b);
+  daysPromise.then((days) => renderPrint(days, b.dataset.filament));
+});
+
+// ---------- explore: the free City in every theme, at different angles ----------
+// Rendered as flat SVG pictures (no WebGL), drawn once the section comes near.
+const MOSAIC = [
+  { theme: 'github-light', angle: -20, tilt: 30, big: true, zoom: 1.3 },
+  { theme: 'github', angle: 0, tilt: 84, zoom: 1.9 }, // straight down: the GitHub graph itself
+  { theme: 'sand', angle: -40, tilt: 26, zoom: 2.2 },
+  { theme: 'ocean', angle: 25, tilt: 34, zoom: 1.4 },
+  { theme: 'neon', angle: -60, tilt: 20, zoom: 2.4 },
+  { theme: 'forest', angle: 10, tilt: 50, zoom: 1.6 },
+  { theme: 'sunset', angle: -25, tilt: 30, zoom: 2 },
+  { theme: 'halloween', angle: 40, tilt: 22, zoom: 2.3 },
+  { theme: 'github-light', angle: 55, tilt: 30, zoom: 2.1 },
+];
+function renderMosaic(days) {
+  $('cityMosaic').innerHTML = MOSAIC.map((m) => {
+    const svg = renderSvg(days, { ...defaults(), user: HERO_USER, theme: m.theme, labels: m.big, title: false, shadows: false, angle: m.angle, tilt: m.tilt, transparent: true });
+    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+    const t = THEMES[m.theme];
+    return `<button type="button" class="tile${m.big ? ' tile-big' : ''}" data-theme="${m.theme}" style="--bg:${t.background};--z:${m.zoom ?? 1}" aria-label="Open the City in ${t.name}">
+      <img src="${url}" alt="" decoding="async" /><span>${t.name}</span></button>`;
+  }).join('');
+}
+const mosaicSeen = new IntersectionObserver(([e]) => {
+  if (!e.isIntersecting) return;
+  mosaicSeen.disconnect();
+  daysPromise.then(renderMosaic);
+}, { rootMargin: '400px' });
+mosaicSeen.observe($('cityMosaic'));
+$('cityMosaic').addEventListener('click', (e) => {
+  const t = e.target.closest('.tile');
+  if (t) openViewer('city', { theme: t.dataset.theme });
 });
 daysPromise.then(renderFeatureArt);
 
