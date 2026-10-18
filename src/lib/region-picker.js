@@ -61,10 +61,16 @@ function build() {
     if (e.key === 'ArrowDown') li.nextElementSibling?.focus();
     if (e.key === 'ArrowUp') (li.previousElementSibling ?? search).focus();
   });
+  // Use: the globe pulls back out with the pin in place, then the card closes
   d.querySelector('.rp-use').addEventListener('click', () => {
     saveCountry(d.selected);
     d.onPick?.(d.selected);
-    d.close();
+    target.scale = 1;
+    d.classList.add('rp-done');
+    setTimeout(() => {
+      d.classList.remove('rp-done');
+      d.close();
+    }, 750);
   });
   return d;
 }
@@ -99,7 +105,8 @@ function select(code, { instant = false } = {}) {
     <span><small>Pro monthly</small><b>${m(p.perDay.month)}</b><i>a day</i></span>
     <span><small>Lifetime</small><b>${m(p.life)}</b><i>once</i></span>`;
   dialog.querySelector('.rp-use').textContent = `Use ${c.name} prices`;
-  target = { phi: lngToPhi(c.lng), theta: latToTheta(c.lat) };
+  // Opening: already facing your country, full globe. Choosing one: turn to it and lean in.
+  target = { phi: lngToPhi(c.lng), theta: latToTheta(c.lat), scale: instant ? 1 : ZOOM };
   if (instant) Object.assign(view, target);
   marker = [c.lat, c.lng];
 }
@@ -108,17 +115,26 @@ function select(code, { instant = false } = {}) {
 // cobe's angles: phi turns the globe around its axis, theta tilts it toward you.
 const lngToPhi = (lng) => Math.PI - ((lng * Math.PI) / 180 - Math.PI / 2);
 const latToTheta = (lat) => Math.min(0.9, Math.max(-0.9, (lat * Math.PI) / 180 * 0.85));
-const view = { phi: 0, theta: 0.3 };
-let target = { phi: 0, theta: 0.3 };
+const ZOOM = 1.4; // how far the globe leans in on a chosen country
+const view = { phi: 0, theta: 0.3, scale: 1 };
+let target = { phi: 0, theta: 0.3, scale: 1 };
 let marker = [0, 0];
 let globe = null;
+let globeDark = false;
 let raf = 0;
 
 async function startGlobe() {
   const canvas = dialog.querySelector('canvas');
+  // match the page (landing light/dark switch, or the Studio's theme), not just the system
+  const root = document.documentElement;
+  const dark = root.dataset.mode ? root.dataset.mode === 'dark' : root.style.colorScheme ? root.style.colorScheme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  if (globe && globeDark !== dark) {
+    globe.destroy();
+    globe = null;
+  }
   if (!globe) {
+    globeDark = dark;
     const { default: createGlobe } = await import('cobe');
-    const dark = matchMedia('(prefers-color-scheme: dark)').matches || document.documentElement.dataset.mode === 'dark';
     const size = canvas.offsetWidth || 340;
     const dpr = Math.min(2, devicePixelRatio);
     canvas.width = canvas.height = size * dpr;
@@ -128,6 +144,7 @@ async function startGlobe() {
       height: size * dpr,
       phi: view.phi,
       theta: view.theta,
+      scale: view.scale,
       dark: dark ? 1 : 0,
       diffuse: 1.4,
       mapSamples: 16000,
@@ -145,7 +162,8 @@ async function startGlobe() {
     d = ((d + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
     view.phi += d * 0.08;
     view.theta += (target.theta - view.theta) * 0.08;
-    globe.update({ phi: view.phi, theta: view.theta, markers: [{ location: marker, size: 0.07 }] });
+    view.scale += (target.scale - view.scale) * 0.09;
+    globe.update({ phi: view.phi, theta: view.theta, scale: view.scale, markers: [{ location: marker, size: 0.07 / view.scale }] });
     raf = requestAnimationFrame(tick);
   };
   tick();
@@ -169,7 +187,9 @@ function injectStyles() {
 @keyframes rp-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } }
 .rp-x { position: absolute; top: 12px; right: 12px; z-index: 2; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border, rgba(0,0,0,.12)); background: var(--panel, #fff); color: inherit; cursor: pointer; }
 .rp-globe { position: relative; display: grid; place-items: center; padding: 24px; background: radial-gradient(80% 70% at 50% 45%, color-mix(in srgb, var(--accent, #c0672a) 10%, transparent), transparent); }
-.rp-globe canvas { width: min(340px, 100%); aspect-ratio: 1; cursor: grab; }
+.rp-globe canvas { width: min(340px, 100%); aspect-ratio: 1; border-radius: 50%; }
+.rp-done .rp-pin { animation: rp-pin 0.7s cubic-bezier(.2,.8,.2,1); }
+@keyframes rp-pin { 40% { transform: translateX(-50%) scale(1.08); } }
 .rp-pin { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
   background: var(--panel, #fff); border: 1px solid var(--border, rgba(0,0,0,.1)); box-shadow: 0 8px 24px rgba(0,0,0,.12); white-space: nowrap; }
 .rp-flag { font-size: 18px; line-height: 1; }
