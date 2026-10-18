@@ -13,6 +13,7 @@ import { renderChartSvg } from './lib/charts.js';
 import { renderSvg } from './lib/svg.js';
 import { createViewPad } from './lib/viewpad.js';
 import { suggestDesktop } from './lib/desktop-hint.js';
+import { startAccounts, signInWithGoogle, mountAccountButton, onAccountChange, signInAvailable, owns } from './lib/account.js';
 import { pricesFor, money, guessCountry } from './lib/pricing.js';
 import { openRegionPicker } from './lib/region-picker.js';
 import { defaults } from './lib/options.js';
@@ -611,5 +612,24 @@ for (const b of document.querySelectorAll('[data-checkout]')) {
     $('checkoutNote').textContent = 'Checkout opens very soon, with Sign in with Google. Until then you can try every world in the Studio for free.';
   });
 }
+
+// ---------- account: Sign in in the nav, or the avatar menu (with a PRO mark) once signed in ----------
+let navAccount = '';
+onAccountChange((a) => {
+  const slot = $('navAccount');
+  slot.toggleAttribute('data-pro', Boolean(a) && owns('pro'));
+  if ((a?.id || '') === navAccount) return;
+  navAccount = a?.id || '';
+  if (a) {
+    slot.innerHTML = '';
+    mountAccountButton(slot);
+  } else slot.innerHTML = '<button type="button" class="nav-signin" id="navSignIn">Sign in</button>';
+});
+$('navAccount').addEventListener('click', (e) => {
+  if (!e.target.closest('#navSignIn')) return;
+  if (!signInAvailable()) return;
+  signInWithGoogle().catch(() => {});
+});
+startAccounts();
 
 suggestDesktop();
