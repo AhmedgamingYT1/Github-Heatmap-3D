@@ -669,15 +669,42 @@ kbd { font: 500 11px/1 var(--mono); padding: 3px 5px; border-radius: 5px; backgr
 .plan-view[data-plan='pro'] .show-actions .pill-btn:not(.pill-btn-ghost) { background: linear-gradient(180deg, var(--gold-1), var(--gold-2)); color: #2a1b04; }
 .slider-dots button[data-on] { background: var(--gold-2); }
 
-/* ---------- what you can do: share link in a phone ---------- */
-.phone {
-  width: 300px; max-width: 100%; border-radius: 38px; padding: 10px; background: #111114;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.22), inset 0 0 0 2px #2a2a30;
+/* ---------- what you can do: share link on an iPhone ---------- */
+.iphone {
+  --w: 286px; position: relative; width: var(--w); aspect-ratio: 71.6 / 147.6; padding: 11px; border-radius: 52px;
+  background: linear-gradient(145deg, #4b4a4f, #1c1c1f 35%, #2c2b30 70%, #59575d);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.28), 0 10px 24px rgba(0, 0, 0, 0.18), inset 0 0 0 1.5px rgba(255, 255, 255, 0.18), inset 0 0 0 4px #0c0c0e;
 }
-.phone-top { display: flex; align-items: center; gap: 8px; padding: 14px 14px 10px; border-radius: 30px 30px 0 0; background: #f7f7f8; color: #111; font-size: 14px; border-bottom: 1px solid #e6e6ea; }
-.phone-back { color: #2f7cf6; font-size: 22px; line-height: 1; }
-.phone-avatar { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 12px/1 var(--sans); color: #fff; background: linear-gradient(135deg, #9b8cff, #5f7bff); }
-.phone-thread { display: grid; gap: 6px; padding: 14px 12px 18px; border-radius: 0 0 30px 30px; background: #fff; min-height: 380px; align-content: end; }
+.iphone-btn { position: absolute; width: 4px; border-radius: 2px; background: linear-gradient(90deg, #2a2a2e, #5a5960); }
+.iphone-btn.action { left: -3px; top: 17%; height: 5%; }
+.iphone-btn.vol-up { left: -3px; top: 25%; height: 9%; }
+.iphone-btn.vol-down { left: -3px; top: 36%; height: 9%; }
+.iphone-btn.power { right: -3px; top: 28%; height: 14%; }
+.iphone-screen {
+  position: relative; height: 100%; overflow: hidden; border-radius: 42px; background: #fff; color: #111;
+  display: grid; grid-template-rows: auto auto 1fr auto; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', var(--sans);
+}
+.ios-status { position: relative; display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 22px 0 30px; font-size: 13px; }
+.ios-status b { font-weight: 600; letter-spacing: -0.01em; }
+.ios-island { position: absolute; left: 50%; top: 10px; width: 92px; height: 27px; transform: translateX(-50%); border-radius: 999px; background: #000; }
+.ios-icons { display: inline-flex; align-items: center; gap: 5px; }
+.ios-icons svg { height: 10px; width: auto; fill: #111; }
+.ios-battery { position: relative; width: 22px; height: 11px; border-radius: 3.5px; border: 1px solid rgba(0, 0, 0, 0.4); padding: 1.5px; }
+.ios-battery::after { content: ''; position: absolute; right: -3px; top: 3px; width: 1.5px; height: 4px; border-radius: 0 1px 1px 0; background: rgba(0, 0, 0, 0.4); }
+.ios-battery i { display: block; height: 100%; width: 80%; border-radius: 1.5px; background: #111; }
+.ios-head { display: grid; grid-template-columns: 30px 1fr 30px; align-items: center; padding: 2px 12px 8px; background: rgba(247, 247, 248, 0.92); border-bottom: 1px solid #e3e3e8; }
+.ios-back { color: #0a84ff; font-size: 26px; line-height: 1; }
+.ios-contact { display: grid; justify-items: center; gap: 3px; }
+.ios-avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font: 600 16px/1 -apple-system, var(--sans); color: #fff; background: linear-gradient(180deg, #a5abb8, #858a96); }
+.ios-contact small { font-size: 10.5px; color: #111; }
+.ios-video svg { width: 20px; fill: none; stroke: #0a84ff; stroke-width: 1.6; }
+.ios-thread { display: grid; gap: 5px; padding: 8px 10px 10px; align-content: end; overflow: hidden; }
+.ios-time { justify-self: center; text-align: center; font-size: 10px; line-height: 1.3; color: #8e8e93; margin-bottom: 4px; }
+.ios-compose { display: flex; align-items: center; gap: 8px; padding: 6px 10px 26px; }
+.ios-plus { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; color: #6e6e73; background: #e9e9ee; }
+.ios-field { flex: 1; padding: 6px 12px; border-radius: 999px; border: 1px solid #d8d8dd; font-size: 12.5px; color: #b0b0b5; }
+.ios-home { position: absolute; left: 50%; bottom: 7px; width: 34%; height: 4.5px; transform: translateX(-50%); border-radius: 999px; background: #111; }
+.msg.out:not(.link-card) { background: #0a84ff; }
 .msg { max-width: 78%; padding: 8px 12px; border-radius: 18px; font-size: 13.5px; line-height: 1.35; }
 .msg.in { justify-self: start; background: #e9e9ee; color: #111; border-bottom-left-radius: 5px; }
 .msg.out { justify-self: end; background: #2f7cf6; color: #fff; border-bottom-right-radius: 5px; }
@@ -721,5 +748,5 @@ kbd { font: 500 11px/1 var(--mono); padding: 3px 5px; border-radius: 5px; backgr
   .mosaic { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto; aspect-ratio: auto; }
   .tile { min-height: 90px; }
   .tile-big { grid-column: 1 / -1; grid-row: auto; min-height: 200px; }
-  .phone-thread { min-height: 320px; }
+  .iphone { --w: 260px; }
 }
