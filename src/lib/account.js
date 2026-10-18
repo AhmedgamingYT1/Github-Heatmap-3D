@@ -68,6 +68,13 @@ async function sync(user) {
   }
 }
 
+/** fetch() as the signed-in account (sends the Clerk session token). */
+export async function authFetch(url, init = {}) {
+  const clerk = await loadClerk();
+  const token = await clerk.session?.getToken();
+  return fetch(url, { ...init, headers: { ...init.headers, ...(token && { Authorization: `Bearer ${token}` }) } });
+}
+
 /** Start Clerk in the background, so a returning visitor is signed in again. */
 export function startAccounts() {
   if (!KEY) return;

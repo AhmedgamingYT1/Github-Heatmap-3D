@@ -11,7 +11,7 @@ import { composeSong, createSongPlayer, renderSongWav } from './lib/song.js';
 import { CHART_TYPES } from './lib/charts.js';
 import { createViewPad } from './lib/viewpad.js';
 import { suggestDesktop } from './lib/desktop-hint.js';
-import { owns, signInAvailable, signInWithGoogle, currentAccount, onAccountChange, startAccounts, mountAccountButton } from './lib/account.js';
+import { owns, signInAvailable, signInWithGoogle, currentAccount, onAccountChange, startAccounts, mountAccountButton, authFetch } from './lib/account.js';
 import { pricesFor, money, guessCountry } from './lib/pricing.js';
 import { openRegionPicker } from './lib/region-picker.js';
 
@@ -232,7 +232,7 @@ for (const [id, st] of Object.entries(STYLES)) {
   b.type = 'button';
   b.role = 'radio';
   b.dataset.style = id;
-  b.innerHTML = st.pro ? `${st.name} <small>PRO</small>` : st.name;
+  b.innerHTML = st.pro ? `${st.name} <small>PRO</small>` : st.name; // the tag becomes ✓ once it's yours (syncPlan)
   b.addEventListener('click', () => update({ style: id }));
   $('styles').appendChild(b);
 }
@@ -483,10 +483,30 @@ function readmeParams() {
   return toParams(opts, README_KEYS);
 }
 
+// Pro worlds (and embeds without the badge) carry a key from our server proving they
+// were paid for; without it the embed shows the free City. Fetched once per world.
+const embedKeys = {};
+function embedKeyFor() {
+  const item = STYLES[state.style].pro ? state.style : state.badge ? null : 'pro';
+  if (!item || !owns(item)) return '';
+  if (embedKeys[item] === undefined) {
+    embedKeys[item] = null; // asking
+    authFetch(`/api/embed-key?item=${item}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
+      .then(({ key }) => {
+        embedKeys[item] = key;
+        renderCode();
+      })
+      .catch(() => delete embedKeys[item]);
+  }
+  return embedKeys[item] || '';
+}
+
 function renderCode() {
   if ($('drawer').hidden) return;
-  const embedQuery = toParams(state, EMBED_KEYS).toString();
-  const pageUrl = `${SITE}/studio.html${embedQuery ? '?' + embedQuery : ''}`;
+  const embedQuery = toParams({ ...state, key: embedKeyFor() }, EMBED_KEYS).toString();
+  const pageQuery = toParams(state, EMBED_KEYS).toString(); // links to the Studio don't need the key
+  const pageUrl = `${SITE}/studio.html${pageQuery ? '?' + pageQuery : ''}`;
   const embedUrl = `${SITE}/embed.html${embedQuery ? '?' + embedQuery : ''}`;
   const name = state.user || 'sample';
   const w = $('embedWidth').value;
@@ -498,7 +518,7 @@ function renderCode() {
     code = `<iframe src="${embedUrl}"\n  style="width: ${cssSize(w)}; height: ${cssSize(h)}; border: 0"\n  title="${name}'s GitHub contributions in 3D" loading="lazy"></iframe>`;
     preview = embedUrl;
   } else if (tab === 'script') {
-    const attrs = [...toParams(state, EMBED_KEYS)].map(([k, v]) => `\n  data-${kebab(k)}="${v}"`).join('');
+    const attrs = [...new URLSearchParams(embedQuery)].map(([k, v]) => `\n  data-${kebab(k)}="${v}"`).join('');
     code = `<div data-github-heatmap-3d${attrs}\n  style="width: ${cssSize(w)}; height: ${cssSize(h)}"></div>\n<script src="${SITE}/embed.js" async></script>`;
     preview = embedUrl;
   } else if (tab === 'readme') {
@@ -626,14 +646,19 @@ let payItem = '';
 let payPlan = 'year';
 function openPaywall(item) {
   payItem = item;
-  const name = item === 'song' ? 'your song' : STYLES[item].name;
-  $('payTitle').textContent = item === 'song' ? 'Keep your song' : `Keep your ${name}`;
+  const whole = item === 'pro'; // "Upgrade" from the plan chip: all of Pro, no single world
+  const name = item === 'song' ? 'your song' : whole ? 'Pro' : STYLES[item].name;
+  $('payTitle').textContent = item === 'song' ? 'Keep your song' : whole ? 'Go Pro' : `Keep your ${name}`;
   $('payLead').textContent =
     item === 'song'
       ? 'Your year, as music. Unlock it to download the song.'
-      : `You made it. Unlock ${name} to share it, embed it on your site and README, and print it.`;
+      : whole
+        ? 'Every world, your song, HD pictures and no badge on your embeds.'
+        : `You made it. Unlock ${name} to share it, embed it on your site and README, and print it.`;
   $('payWorldName').textContent = item === 'song' ? 'Just the song' : `Just ${name}`;
-  $('payReady').textContent = item === 'song' ? '♪ Your song is ready' : `Your ${name} is ready`;
+  $('payPlans').querySelector('[data-plan="world"]').hidden = whole;
+  if (whole && payPlan === 'world') payPlan = 'year';
+  $('payReady').textContent = item === 'song' ? '♪ Your song is ready' : whole ? 'Your year, in every world' : `Your ${name} is ready`;
   try {
     $('payShot').src = map.snapshot('image/jpeg', 0.85);
   } catch {}
@@ -701,7 +726,22 @@ $('account').addEventListener('click', (e) => {
   if (!signInAvailable()) return showStep(1, 'Accounts open very soon. Everything here works without one for now.');
   signInWithGoogle().catch(() => {});
 });
+// What plan you're on, always in view: "Free · Upgrade", or a gold PRO.
+function syncPlan() {
+  const chip = $('planChip');
+  const pro = owns('pro');
+  chip.hidden = !currentAccount();
+  chip.toggleAttribute('data-pro', pro);
+  chip.innerHTML = pro ? '✦ PRO' : 'Free · <b>Upgrade</b>';
+  chip.title = pro ? 'You have every Pro world' : 'See what Pro unlocks';
+  for (const b of $('styles').children) {
+    const tag = b.querySelector('small');
+    if (tag) tag.textContent = owns(b.dataset.style) ? '✓ YOURS' : 'PRO';
+  }
+}
+$('planChip').addEventListener('click', () => !owns('pro') && openPaywall('pro'));
 onAccountChange((a) => {
+  syncPlan();
   syncAccountButton(a);
   // back from Google with a paywall to finish: open it again where they left off
   let pending = null;
