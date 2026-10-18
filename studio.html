@@ -12,18 +12,16 @@
     <div id="app"></div>
 
     <header class="panel">
-      <h1><a href="/" class="home">GitHub Heatmap <span>3D</span></a> <small class="studio-tag">Studio</small></h1>
+      <div class="brand-row">
+        <a href="/" class="home-btn" title="Back to the home page"><span aria-hidden="true">←</span> Home</a>
+        <a href="/" class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>Heatmap <span>3D</span></a>
+        <small class="studio-tag">Studio</small>
+      </div>
       <form id="form">
         <input id="username" placeholder="GitHub username" autocomplete="off" spellcheck="false" />
         <select id="year"></select>
         <button type="submit">Load</button>
       </form>
-      <ol class="guide" id="guide" aria-label="How it works">
-        <li><button type="button" data-step="1"><b>1</b>Username</button></li>
-        <li><button type="button" data-step="2"><b>2</b>World</button></li>
-        <li><button type="button" data-step="3"><b>3</b>Angle</button></li>
-        <li><button type="button" data-step="4"><b>4</b>Share</button></li>
-      </ol>
       <div id="status"></div>
       <div class="player" id="player" hidden>
         <button type="button" id="playSong" class="play-btn" aria-label="Play your year as a song">▶</button>
@@ -36,6 +34,22 @@
         <button type="button" id="downloadSong" class="icon-btn" title="Download song (WAV)" aria-label="Download song as WAV">⤓</button>
       </div>
     </header>
+
+    <!-- the progress bar: four steps, each with a little guide that pops up -->
+    <nav class="panel progress" id="progress" aria-label="Your progress">
+      <div class="progress-track" aria-hidden="true"><i id="progressFill"></i></div>
+      <ol class="guide" id="guide">
+        <li><button type="button" data-step="1" aria-expanded="false"><b>1</b><span>Username</span></button></li>
+        <li><button type="button" data-step="2" aria-expanded="false"><b>2</b><span>World</span></button></li>
+        <li><button type="button" data-step="3" aria-expanded="false"><b>3</b><span>Angle</span></button></li>
+        <li><button type="button" data-step="4" aria-expanded="false"><b>4</b><span>Share</span></button></li>
+      </ol>
+      <div class="pop" id="pop" hidden role="dialog" aria-labelledby="popTitle">
+        <div class="pop-head"><span class="pop-step" id="popStep"></span><b id="popTitle"></b><button type="button" class="pop-x" id="popClose" aria-label="Close">✕</button></div>
+        <p id="popText"></p>
+        <div class="pop-actions" id="popActions"></div>
+      </div>
+    </nav>
 
     <div class="panel stats" id="stats" hidden>
       <div class="big" id="total">0</div>
@@ -117,6 +131,22 @@
         <ol class="howto" id="howto"></ol>
       </section>
 
+      <!-- after Copy: what they made and what it will look like -->
+      <section class="done" id="done" hidden aria-live="polite">
+        <div class="done-check" aria-hidden="true">✓</div>
+        <h3 class="done-title">Copied. You’re all set!</h3>
+        <p class="hint" id="doneLead"></p>
+        <div class="done-preview" id="donePreview"></div>
+        <div class="done-made" id="doneMade"></div>
+        <h4>Now</h4>
+        <ol class="howto" id="doneNext"></ol>
+        <div class="buttons">
+          <a class="pill" id="doneOpen" target="_blank" rel="noopener">Open live preview ↗</a>
+          <button type="button" id="doneAgain">Share somewhere else</button>
+        </div>
+        <button type="button" class="primary done-close" id="doneClose">Back to my model</button>
+      </section>
+
       <details class="fine">
         <summary>Fine-tune the look, motion and starting view</summary>
       <section>
@@ -135,6 +165,7 @@
         <label><input type="checkbox" data-opt="interactive" /> Drag to rotate</label>
         <label><input type="checkbox" data-opt="zoom" /> Scroll to zoom</label>
         <label><input type="checkbox" data-opt="tooltip" /> Hover tooltips</label>
+        <label><input type="checkbox" data-opt="tour" /> Walk through the days by itself</label>
         <label><input type="checkbox" data-opt="music" /> "Play your year" button on embeds</label>
       </section>
 

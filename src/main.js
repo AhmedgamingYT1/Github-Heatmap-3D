@@ -36,8 +36,9 @@ const HOW_TO = matchMedia('(pointer: coarse)').matches ? 'Drag to rotate · pinc
 const map = createHeatmap($('app'), { ...state, homeZoom: PHONE ? 1.7 : 1, maxFps: 60, ...(PHONE && { detail: 'low', shadowMapSize: 1024, maxPixelRatio: 1.5 }) });
 if (import.meta.env.DEV) window.__heatmap = map; // for debugging in the console
 
-// ---------- the guide: username → world → angle → share ----------
-// Each step lights up when it's done; clicking one takes you to it.
+// ---------- the progress bar: username → world → angle → share ----------
+// Each step ticks off as it's done. Clicking one opens a small guide for it, with the
+// controls for that step right inside, and a way on to the next.
 const done = new Set();
 function markStep(n) {
   done.add(n);
@@ -50,27 +51,98 @@ function syncGuide() {
     b.toggleAttribute('data-done', done.has(n));
     b.toggleAttribute('data-next', n === next);
   }
+  $('progressFill').style.width = `${(done.size / 4) * 100}%`;
 }
 function nudge(el) {
   el.classList.remove('nudge');
   void el.offsetWidth;
   el.classList.add('nudge');
 }
+
+const STEPS = {
+  1: {
+    title: 'Bring your year',
+    text: 'Type your GitHub username and load it. We only read your public contribution graph, no sign-in.',
+    actions: () =>
+      `<form class="pop-form" id="popForm"><input id="popUser" placeholder="your-username" autocomplete="off" spellcheck="false" value="${state.user || ''}" /><button type="submit" class="primary">Load</button></form>`,
+  },
+  2: {
+    title: 'Pick a world',
+    text: 'Choose how your year looks. Colors are in the bar at the bottom, next to the worlds.',
+    actions: () =>
+      Object.entries(STYLES)
+        .map(([id, st]) => `<button type="button" data-pick-style="${id}" aria-pressed="${state.style === id}">${st.name}${st.pro ? ' <small>PRO</small>' : ''}</button>`)
+        .join(''),
+  },
+  3: {
+    title: 'Find your angle',
+    text: 'Drag to turn it, scroll or pinch to zoom, or jump to a view. Like it? Keep it as the starting view of your embed.',
+    actions: () =>
+      ['top', 'front', 'left', 'right'].map((v) => `<button type="button" data-pick-view="${v}">${v[0].toUpperCase() + v.slice(1)}</button>`).join('') +
+      '<button type="button" class="primary" data-save-view>Keep this angle</button>',
+  },
+  4: {
+    title: 'Share it',
+    text: 'Pick where it goes (your website, your GitHub README or a link), copy one line, and we show you exactly where to paste it.',
+    actions: () => '<button type="button" class="primary" data-open-share>Share &amp; embed →</button>',
+  },
+};
+let openStep = 0;
+function showStep(n) {
+  openStep = n;
+  $('pop').hidden = !n;
+  for (const b of $('guide').querySelectorAll('button')) b.setAttribute('aria-expanded', Number(b.dataset.step) === n);
+  if (!n) return;
+  const st = STEPS[n];
+  $('popStep').textContent = `Step ${n} of 4`;
+  $('popTitle').textContent = st.title;
+  $('popText').textContent = st.text;
+  $('popActions').innerHTML = st.actions() + (n < 4 ? `<button type="button" class="pop-next" data-next-step="${n + 1}">Next: ${STEPS[n + 1].title} →</button>` : '');
+  $('pop').style.setProperty('--x', `${(n - 1) * 25 + 12.5}%`);
+  if (n === 1) $('popUser').focus();
+  if (n === 2) nudge($('controls'));
+  if (n === 3) nudge(document.querySelector('.studio-pad'));
+}
 $('guide').addEventListener('click', (e) => {
   const b = e.target.closest('[data-step]');
   if (!b) return;
   setPreview(false);
   const n = Number(b.dataset.step);
-  if (n === 1) $('username').focus();
-  if (n === 2) nudge($('controls'));
-  if (n === 3) nudge(document.querySelector('.studio-pad'));
-  if (n === 4) setDrawer(true);
+  showStep(openStep === n ? 0 : n);
 });
-if (state.user) markStep(1);
-// dragging the model or using the camera pad counts as finding your angle
+$('popClose').addEventListener('click', () => showStep(0));
+$('pop').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const user = $('popUser').value.trim().replace(/^@/, '');
+  if (!user) return $('popUser').focus();
+  $('username').value = user;
+  update({ user, year: Number(yearSelect.value) });
+  showStep(2);
+});
+$('pop').addEventListener('click', (e) => {
+  const t = e.target.closest('button');
+  if (!t) return;
+  if (t.dataset.pickStyle) {
+    update({ style: t.dataset.pickStyle });
+    showStep(2); // refresh which one is picked
+  } else if (t.dataset.pickView) {
+    map.viewFrom(t.dataset.pickView);
+    markStep(3);
+  } else if ('saveView' in t.dataset) {
+    update({ camera: map.getCamera() });
+    markStep(3);
+    t.textContent = 'Kept ✓';
+  } else if ('openShare' in t.dataset) {
+    showStep(0);
+    setDrawer(true);
+  } else if (t.dataset.nextStep) showStep(Number(t.dataset.nextStep));
+});
 addEventListener('pointerdown', (e) => {
+  if (openStep && !e.target.closest('#progress')) showStep(0);
+  // dragging the model or using the camera pad counts as finding your angle
   if (e.target.closest('#app canvas, .studio-pad')) markStep(3);
 });
+if (state.user) markStep(1);
 
 // ---------- camera pad + preview ----------
 // Preview hides every panel so only the model is left; "Show controls" brings them back.
@@ -296,7 +368,11 @@ $('clearCamera').addEventListener('click', () => update({ camera: null }));
 
 // ---------- drawer ----------
 function setDrawer(open) {
-  if (open) markStep(4);
+  if (open) {
+    markStep(4);
+    takeShot();
+    showDone(false);
+  }
   $('drawer').hidden = !open;
   document.body.classList.toggle('drawer-open', open);
   if (open) renderCode();
@@ -305,6 +381,7 @@ $('openDrawer').addEventListener('click', () => setDrawer($('drawer').hidden));
 $('closeDrawer').addEventListener('click', () => setDrawer(false));
 addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
+  showStep(0);
   setDrawer(false);
   setPreview(false);
 });
@@ -345,10 +422,24 @@ function howTo() {
     },
   }[tab];
 }
+// Pictures of the place it goes, with the real thing in them: a snapshot of the current
+// view for websites and links, the actual README image for READMEs.
+let shot = '';
+function takeShot() {
+  try {
+    shot = map.snapshot(state.transparent ? 'image/png' : 'image/jpeg', 0.85);
+  } catch {
+    shot = '';
+  }
+}
+const img = (src, cls = '') => (src ? `<img class="${cls}" src="${esc(src)}" alt="" />` : '');
 const PICS = {
-  site: `<div class="pic-site"><div class="pic-bar"><i></i><i></i><i></i><span>yourname.dev</span></div><div class="pic-body"><b></b><i></i><i class="short"></i><div class="pic-slot">your 3D year goes here</div></div></div>`,
-  readme: () => `<div class="pic-readme"><div class="pic-bar">${esc(state.user || 'you')} / <b>README.md</b> <span class="pic-pencil">✎</span></div><div class="pic-body"><b>Hi there</b><i></i><div class="pic-slot">your picture goes here</div></div></div>`,
-  link: `<div class="pic-chat"><span class="pic-msg">Here’s my year!</span><span class="pic-msg pic-link">github-heatmap-3d…/studio.html?user=…</span></div>`,
+  site: () =>
+    `<div class="pic-site"><div class="pic-bar"><i></i><i></i><i></i><span>yourname.dev</span></div><div class="pic-body"><b></b><i></i><i class="short"></i><div class="pic-slot has-img">${img(shot)}</div></div></div>`,
+  readme: () =>
+    `<div class="pic-readme"><div class="pic-bar">${esc(state.user || 'you')} / <b>README.md</b> <span class="pic-pencil">✎</span></div><div class="pic-body"><b>Hi there</b><i></i><div class="pic-slot has-img light">${img(`/api/heatmap?${readmeParams()}`)}</div></div></div>`,
+  link: () =>
+    `<div class="pic-chat"><span class="pic-msg">Here’s my year!</span><span class="pic-msg pic-card">${img(shot)}<b>@${esc(state.user || 'you')} · ${state.year} in 3D</b><small>${esc(location.host)}</small></span></div>`,
 };
 
 const kebab = (s) => s.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
@@ -389,8 +480,7 @@ function renderCode() {
   $('code').textContent = code;
   const how = howTo();
   $('howto').innerHTML = how.steps.map((t) => `<li>${t}</li>`).join('');
-  const pic = PICS[how.pic];
-  $('howtoPic').innerHTML = typeof pic === 'function' ? pic() : pic;
+  $('howtoPic').innerHTML = PICS[how.pic]();
   $('previewLink').href = preview;
   $('tabHint').textContent = TAB_HINTS[tab];
   $('sizeFields').hidden = !(tab === 'website' || tab === 'script');
@@ -407,6 +497,7 @@ function setTab(t) {
   for (const b of $('dests').children) b.setAttribute('aria-checked', b.dataset.dest === dest);
   for (const b of $('embedKind').children) b.setAttribute('aria-selected', b.dataset.tab === t);
   $('embedKind').hidden = dest !== 'website';
+  if (!$('drawer').hidden) takeShot();
   renderCode();
 }
 $('dests').addEventListener('click', (e) => {
@@ -425,12 +516,38 @@ $('embedHeight').addEventListener('input', renderCode);
 $('copy').addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText($('code').textContent);
-    $('copy').textContent = 'Copied!';
   } catch {
     $('copy').textContent = 'Select & copy manually';
+    setTimeout(() => ($('copy').textContent = 'Copy code'), 1500);
+    return;
   }
-  setTimeout(() => ($('copy').textContent = 'Copy code'), 1500);
+  showDone(true);
 });
+
+// ---------- after Copy: what they made, and what it will look like ----------
+const DEST_NAMES = { website: 'your website', script: 'your website', readme: 'your GitHub README', link: 'anywhere you like' };
+function showDone(on) {
+  $('drawer').classList.toggle('is-done', on);
+  $('done').hidden = !on;
+  if (!on) return;
+  const style = STYLES[state.style];
+  const colors = style.palettes ? (style.palettes[state.palette] ?? Object.values(style.palettes)[0]).name : style.theme ? 'Built in' : THEMES[state.theme].name;
+  $('doneLead').textContent = `The code is on your clipboard, ready for ${DEST_NAMES[tab]}. This is how it will look:`;
+  $('donePreview').innerHTML = PICS[howTo().pic]();
+  const made = [
+    ['Year', `@${state.user || 'sample'} · ${state.year}`],
+    ['World', style.name],
+    ['Colors', colors],
+    ['Angle', state.camera ? 'Your saved angle' : 'Default angle'],
+    ...(tab === 'website' || tab === 'script' ? [['Size', `${$('embedWidth').value} × ${$('embedHeight').value}`]] : []),
+  ];
+  $('doneMade').innerHTML = made.map(([k, v]) => `<span><small>${k}</small><b>${esc(v)}</b></span>`).join('');
+  $('doneNext').innerHTML = howTo().steps.slice(1).map((t) => `<li>${t}</li>`).join('');
+  $('doneOpen').href = $('previewLink').href;
+  $('drawer').scrollTop = 0;
+}
+$('doneAgain').addEventListener('click', () => showDone(false));
+$('doneClose').addEventListener('click', () => setDrawer(false));
 
 // ---------- go ----------
 applyPageTheme();
