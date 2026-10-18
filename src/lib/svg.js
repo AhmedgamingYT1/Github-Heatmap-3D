@@ -19,7 +19,8 @@ function shade(hex, f) {
 }
 
 export function renderSvg(days, opts) {
-  const theme = THEMES[getTheme(opts.theme)];
+  // `colors` (code only, never from a URL) overrides theme colors, e.g. one filament color for a print preview
+  const theme = { ...THEMES[getTheme(opts.theme)], ...opts.colors };
   const th = (opts.angle * Math.PI) / 180;
   const ph = (opts.tilt * Math.PI) / 180;
   const [cosT, sinT, sinP, cosP] = [Math.cos(th), Math.sin(th), Math.sin(ph), Math.cos(ph)];
