@@ -12,6 +12,8 @@ import { CHART_TYPES } from './lib/charts.js';
 import { createViewPad } from './lib/viewpad.js';
 import { suggestDesktop } from './lib/desktop-hint.js';
 import { owns, signInAvailable, signInWithGoogle, currentAccount } from './lib/account.js';
+import { pricesFor, money, guessCountry } from './lib/pricing.js';
+import { openRegionPicker } from './lib/region-picker.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -592,12 +594,34 @@ suggestDesktop();
 // Shown at the moment a Pro world is about to leave the Studio (share, STL, song), never
 // before: you can look at every world for free. Prices are framed per day, a single world
 // can be bought on its own, and the yearly plan is picked by default as the best value.
+// Prices follow the visitor's country (a guess they can change with the globe picker).
+let country = guessCountry();
 const PLANS = {
-  world: (name) => `$1.99 one time. ${name} stays yours, with embeds, README pictures and STL.`,
-  year: () => '$29 billed once a year. That’s $2.42 a month, 40% less than monthly.',
-  month: () => '$4 billed every month. Cancel anytime.',
-  life: () => '$49 once. No subscription, ever, and every world we add.',
+  world: (p, name) => `${money(p.world, p.currency)} one time. ${name} stays yours, with embeds, README pictures and STL.`,
+  year: (p) => `${money(p.year, p.currency)} billed once a year. That’s ${money(p.year / 12, p.currency)} a month, ${Math.round((1 - p.year / (p.month * 12)) * 100)}% less than monthly.`,
+  month: (p) => `${money(p.month, p.currency)} billed every month. Cancel anytime.`,
+  life: (p) => `${money(p.life, p.currency)} once. No subscription, ever, and every world we add.`,
 };
+function renderPrices() {
+  const p = pricesFor(country);
+  const day = (n) => money(n, p.currency);
+  $('payFlag').textContent = p.country.flag;
+  $('payCountryName').textContent = p.country.name;
+  $('ppWorld').textContent = money(p.world, p.currency);
+  $('ppYear').textContent = day(p.perDay.year);
+  $('ppYearWas').textContent = day(p.perDay.month);
+  $('ppMonth').textContent = day(p.perDay.month);
+  setPayPlan(payPlan);
+}
+$('payCountry').addEventListener('click', () =>
+  openRegionPicker({
+    current: country,
+    onPick: (code) => {
+      country = code;
+      renderPrices();
+    },
+  }),
+);
 let payItem = '';
 let payPlan = 'year';
 function openPaywall(item) {
@@ -613,7 +637,7 @@ function openPaywall(item) {
   try {
     $('payShot').src = map.snapshot('image/jpeg', 0.85);
   } catch {}
-  setPayPlan(payPlan);
+  renderPrices();
   const who = currentAccount();
   $('googleBtn').lastChild.textContent = who ? ` Continue as ${who.name?.split(' ')[0] || who.email}` : ' Continue with Google';
   $('payNote').textContent = 'Cancel anytime. Your City stays free forever.';
@@ -623,7 +647,7 @@ function openPaywall(item) {
 function setPayPlan(plan) {
   payPlan = plan;
   for (const b of $('payPlans').children) b.setAttribute('aria-checked', b.dataset.plan === plan);
-  $('payBilled').textContent = PLANS[plan](payItem === 'song' ? 'Your song' : STYLES[payItem]?.name ?? '');
+  $('payBilled').textContent = PLANS[plan](pricesFor(country), payItem === 'song' ? 'Your song' : STYLES[payItem]?.name ?? '');
 }
 $('payPlans').addEventListener('click', (e) => {
   const b = e.target.closest('[data-plan]');

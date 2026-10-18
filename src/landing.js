@@ -13,6 +13,8 @@ import { renderChartSvg } from './lib/charts.js';
 import { renderSvg } from './lib/svg.js';
 import { createViewPad } from './lib/viewpad.js';
 import { suggestDesktop } from './lib/desktop-hint.js';
+import { pricesFor, money, guessCountry } from './lib/pricing.js';
+import { openRegionPicker } from './lib/region-picker.js';
 import { defaults } from './lib/options.js';
 
 // The landing page shows a built-in demo year (every month filled), labelled as yours.
@@ -565,17 +567,41 @@ billing.addEventListener('click', (e) => {
   if (!b || b.getAttribute('aria-checked') === 'true') return;
   for (const x of billing.querySelectorAll('button')) x.setAttribute('aria-checked', x === b);
   moveBillingGlider();
-  // prices read per day; the full amount is always right under them
-  const yearly = b.dataset.bill === 'year';
+  yearly = b.dataset.bill === 'year';
   const price = $('proPrice');
   price.classList.add('swap');
   setTimeout(() => {
-    price.textContent = yearly ? '$0.08' : '$0.13';
-    $('proWas').hidden = !yearly;
-    $('proBilled').textContent = yearly ? '$29 a year, that’s $2.42 a month. Cancel anytime.' : '$4 a month. Cancel anytime.';
+    renderPricing();
     price.classList.remove('swap');
   }, 180);
 });
+
+// Prices read per day, in the visitor's currency; the full amount is always right under them.
+let yearly = true;
+let country = guessCountry();
+function renderPricing() {
+  const p = pricesFor(country);
+  const m = (n) => money(n, p.currency);
+  $('priceFlag').textContent = p.country.flag;
+  $('priceCountryName').textContent = p.country.name;
+  $('freePrice').textContent = m(0);
+  $('proPrice').textContent = m(yearly ? p.perDay.year : p.perDay.month);
+  $('proWas').textContent = m(p.perDay.month);
+  $('proWas').hidden = !yearly;
+  $('proBilled').textContent = yearly ? `${m(p.year)} a year, that’s ${m(p.year / 12)} a month. Cancel anytime.` : `${m(p.month)} a month. Cancel anytime.`;
+  $('lifePrice').textContent = `${m(p.life)}, one payment`;
+  $('worldPrice').textContent = m(p.world);
+}
+renderPricing();
+$('priceCountry').addEventListener('click', () =>
+  openRegionPicker({
+    current: country,
+    onPick: (code) => {
+      country = code;
+      renderPricing();
+    },
+  }),
+);
 addEventListener('resize', moveBillingGlider);
 document.fonts?.ready.then(moveBillingGlider);
 moveBillingGlider();

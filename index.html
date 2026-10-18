@@ -378,12 +378,13 @@
         <button type="button" role="radio" data-bill="month" aria-checked="false">Monthly</button>
         <span class="seg-glider" aria-hidden="true"></span>
       </div>
+      <button type="button" class="price-country" id="priceCountry"><span id="priceFlag"></span><span>Prices for <b id="priceCountryName"></b></span><span aria-hidden="true">▾</span></button>
       <div class="plans">
         <div class="bezel plan">
           <div class="bezel-in">
             <h3>Free</h3>
             <p class="plan-sub">Everything you need to show your year.</p>
-            <div class="price">$0<small>forever</small></div>
+            <div class="price"><span id="freePrice">$0</span><small>forever</small></div>
             <ul><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>3D City in 8 themes</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Stats card and Weekly rhythm</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Website embed and README image</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Small "made with" badge</li></ul>
             <a href="/studio.html" class="pill-btn pill-btn-ghost">Start free</a>
           </div>
@@ -412,7 +413,7 @@
           <div class="bezel-in">
             <h3>Lifetime</h3>
             <p class="plan-sub">Pro forever, and every world we add.</p>
-            <div class="price">Once<small>$49, one payment</small></div>
+            <div class="price">Once<small id="lifePrice">$49, one payment</small></div>
             <ul><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Everything in Pro, forever</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Every new world as it ships</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Your name on the supporters wall</li></ul>
             <button type="button" class="pill-btn pill-btn-ghost" data-checkout="lifetime">Get Lifetime</button>
           </div>
@@ -422,7 +423,7 @@
         <div class="bezel-in one-in">
           <div class="one-text"><b>Only want one world?</b><span>Keep a single design forever. No subscription.</span></div>
           <div class="one-worlds"><span>Night City</span><span>Galaxy</span><span>Forest</span><span>Your song</span></div>
-          <div class="one-price"><b>$1.99</b><small>once, per world</small></div>
+          <div class="one-price"><b id="worldPrice">$1.99</b><small>once, per world</small></div>
           <button type="button" class="pill-btn pill-btn-ghost" data-checkout="world">Pick one</button>
         </div>
       </div>

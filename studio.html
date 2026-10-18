@@ -192,19 +192,20 @@
         <span class="pay-kicker" id="payKicker">PRO</span>
         <h2 id="payTitle">Keep your Galaxy</h2>
         <p class="pay-lead" id="payLead">You made it. Unlock it to share it, embed it and download it.</p>
+        <button type="button" class="pay-country" id="payCountry"><span id="payFlag"></span><span>Prices for <b id="payCountryName"></b></span><span aria-hidden="true">▾</span></button>
         <div class="pay-plans" id="payPlans" role="radiogroup" aria-label="Plan">
           <button type="button" role="radio" data-plan="world" aria-checked="false">
             <span class="pp-name"><b id="payWorldName">Just this world</b><small>Yours forever. One payment.</small></span>
-            <span class="pp-price"><b>$1.99</b><small>once</small></span>
+            <span class="pp-price"><b id="ppWorld"></b><small>once</small></span>
           </button>
           <button type="button" role="radio" data-plan="year" aria-checked="true">
             <span class="pp-tag">Best value</span>
             <span class="pp-name"><b>Pro, yearly</b><small>Every world, your song, HD, no badge</small></span>
-            <span class="pp-price"><b>$0.08</b><small>a day</small><s>$0.13</s></span>
+            <span class="pp-price"><b id="ppYear"></b><small>a day</small><s id="ppYearWas"></s></span>
           </button>
           <button type="button" role="radio" data-plan="month" aria-checked="false">
             <span class="pp-name"><b>Pro, monthly</b><small>Everything in Pro. Cancel anytime.</small></span>
-            <span class="pp-price"><b>$0.13</b><small>a day</small></span>
+            <span class="pp-price"><b id="ppMonth"></b><small>a day</small></span>
           </button>
           <button type="button" role="radio" data-plan="life" aria-checked="false">
             <span class="pp-name"><b>Lifetime</b><small>Pro forever, and every world we add</small></span>

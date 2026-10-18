@@ -525,3 +525,8 @@ form { margin-top: 10px; }
   .pay-media { min-height: 180px; }
   .pay-body { padding: 20px 16px 18px; }
 }
+.pay-country {
+  justify-self: start; display: inline-flex; align-items: center; gap: 8px; margin: -2px 0 2px; padding: 7px 12px; font-size: 13px; color: var(--muted);
+}
+.pay-country b { color: var(--text); font-weight: 600; }
+.pay-country span:first-child { font-size: 16px; line-height: 1; }
