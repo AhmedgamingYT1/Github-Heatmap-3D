@@ -23,6 +23,7 @@ export const OPTIONS = {
   interactive: { type: 'bool', default: true }, // drag / zoom with the mouse
   zoom: { type: 'bool', default: true }, // scroll-wheel zoom (embeds often want this off)
   tooltip: { type: 'bool', default: true },
+  tour: { type: 'bool', default: true }, // the tooltip walks through the days by itself until someone points
   transparent: { type: 'bool', default: false }, // no background, for embedding on any page
   camera: { type: 'vec3', default: null }, // saved view, e.g. "-18,32,52"
   badge: { type: 'bool', default: true }, // small "open in 3D" link on embeds

@@ -229,6 +229,7 @@ export function createHeatmap(container, initialOptions = {}) {
     }
     style = built;
     style.resize?.(size.w, size.h);
+    if (!prevHeights) restartTour(); // a fresh build grows in again
     applyLiveOptions();
     markReady();
   }
@@ -321,6 +322,7 @@ export function createHeatmap(container, initialOptions = {}) {
     camera.position.setFromSpherical(from);
     moveCamera(new THREE.Spherical().setFromVector3(homePosition()), { duration, from });
     style?.replay?.();
+    restartTour();
   }
 
   // Named views. The board's front is the side with the name on it (+z); `phi` is measured
@@ -370,7 +372,10 @@ export function createHeatmap(container, initialOptions = {}) {
     pointer.set((pointerPx.x / r.width) * 2 - 1, -(pointerPx.y / r.height) * 2 + 1);
     pointerInside = true;
   };
-  const onPointerLeave = () => (pointerInside = false);
+  const onPointerLeave = () => {
+    pointerInside = false;
+    tour.resumeAt = performance.now() + 1500; // give the walk-through a moment before it picks up again
+  };
   renderer.domElement.addEventListener('pointermove', onPointerMove);
   renderer.domElement.addEventListener('pointerleave', onPointerLeave);
 
@@ -380,12 +385,44 @@ export function createHeatmap(container, initialOptions = {}) {
     style?.setHover?.(i);
   }
 
-  function updateHover() {
-    if (!style || !pointerInside || !opts.tooltip) {
-      setHovered(-1);
-      tooltip.classList.remove('on');
-      return;
+  function hideTip() {
+    setHovered(-1);
+    tooltip.classList.remove('on');
+  }
+
+  // The walk-through: until someone points at the model, the tooltip visits the days one
+  // by one from January, so it's clear that every bar is a day you can look at.
+  const TOUR_STEP = 650; // ms per day
+  const TOUR_DELAY = 2600; // after a build, let the grow-in finish first
+  const tour = { day: 0, next: Infinity, resumeAt: 0 };
+  function restartTour() {
+    tour.day = -1; // the first step shows January 1st
+    tour.next = performance.now() + TOUR_DELAY;
+  }
+  const projected = new THREE.Vector3();
+  function stepTour(now) {
+    if (!opts.tour || highlighted >= 0 || now < tour.resumeAt || !style.anchor) return hideTip();
+    if (now >= tour.next) {
+      tour.day = (tour.day + 1) % days.length;
+      tour.next = now + TOUR_STEP;
     }
+    if (tour.day < 0) return hideTip(); // still growing in
+    // days out of view (a close-up, the far side) are skipped rather than waited on
+    const inView = () => {
+      projected.copy(style.anchor(tour.day)).project(camera);
+      return projected.z < 1 && Math.abs(projected.x) < 0.92 && Math.abs(projected.y) < 0.85;
+    };
+    for (let tries = 0; !inView(); tries++) {
+      if (tries >= days.length) return hideTip();
+      tour.day = (tour.day + 1) % days.length;
+    }
+    setHovered(tour.day);
+    showTip(tour.day, ((projected.x + 1) / 2) * size.w, ((1 - projected.y) / 2) * size.h);
+  }
+
+  function updateHover(now) {
+    if (!style || !opts.tooltip) return hideTip();
+    if (!pointerInside) return stepTour(now);
     raycaster.setFromCamera(pointer, camera);
     const i = style.pick(raycaster);
     setHovered(i);
@@ -393,6 +430,11 @@ export function createHeatmap(container, initialOptions = {}) {
       tooltip.classList.remove('on');
       return;
     }
+    tour.day = i; // the walk-through continues from the last day looked at
+    showTip(i, pointerPx.x, pointerPx.y);
+  }
+
+  function showTip(i, x, y) {
     const day = days[i];
     const n = day.count;
     if (tooltip.dataset.day !== day.date) {
@@ -404,8 +446,8 @@ export function createHeatmap(container, initialOptions = {}) {
         `<span class="hm-tip-n"><b>${n}</b> contribution${n === 1 ? '' : 's'}</span>` +
         (tag ? `<span class="hm-tip-tag">${tag}</span>` : '');
     }
-    tooltip.style.left = `${pointerPx.x}px`;
-    tooltip.style.top = `${pointerPx.y}px`;
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
     tooltip.classList.add('on');
   }
 
@@ -445,7 +487,7 @@ export function createHeatmap(container, initialOptions = {}) {
       marker.material.color.set(theme.accent);
       marker.visible = true;
     } else marker.visible = false;
-    updateHover();
+    updateHover(now);
     if (useBloom()) composer.render();
     else renderer.render(scene, camera);
   }
