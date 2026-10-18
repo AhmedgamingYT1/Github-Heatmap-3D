@@ -262,3 +262,67 @@ body.preview .panel { opacity: 0; visibility: hidden; }
   .studio-pad { right: 10px; }
   .drawer { top: 10px; right: 10px; bottom: 10px; left: 10px; width: auto; }
 }
+
+/* ---------- the guide: username → world → angle → share ---------- */
+.guide { list-style: none; margin: 0 0 4px; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.guide button {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 4px; border-radius: 10px;
+  font-size: 12px; font-weight: 550; color: var(--muted); background: transparent; border: 1px solid var(--border);
+}
+.guide b { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font: 700 10.5px/1 var(--mono); background: var(--button); }
+.guide button[data-done] { color: var(--text); }
+.guide button[data-done] b { color: #fff; background: var(--accent); font-size: 0; }
+.guide button[data-done] b::after { content: '✓'; font-size: 10.5px; }
+.guide button[data-next] { color: var(--text); border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.guide button[data-next] b { color: #fff; background: var(--accent); }
+form { margin-top: 10px; }
+.nudge { animation: nudge 0.9s var(--ease); }
+@keyframes nudge { 30% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent); } }
+
+/* ---------- share drawer: 1 where, 2 code, 3 how ---------- */
+.share-step h3 { display: flex; align-items: center; gap: 8px; font: 600 14px/1.2 var(--sans) !important; text-transform: none !important; letter-spacing: -0.01em !important; color: var(--text) !important; }
+.share-step h3 b { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 700 11px/1 var(--mono); color: #fff; background: var(--accent); }
+.dests { display: grid; gap: 6px; margin-bottom: 10px; }
+.dests button {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; text-align: left; background: var(--field);
+}
+.dests button svg { width: 22px; height: 22px; flex: none; color: var(--muted); }
+.dests button span { display: grid; gap: 1px; }
+.dests button b { font-weight: 600; }
+.dests button small { color: var(--muted); font-size: 12px; }
+.dests button[aria-checked='true'] { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.dests button[aria-checked='true'] svg { color: var(--accent); }
+.kinds { margin-bottom: 4px; }
+.kinds[hidden] { display: none; }
+.howto { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 8px; font-size: 13.5px; }
+.howto li::marker { color: var(--accent); font-weight: 700; }
+.drawer label.field select { min-height: 34px; }
+
+/* the little pictures of where it goes */
+.howto-pic { display: grid; place-items: center; padding: 14px; border-radius: 14px; background: color-mix(in srgb, var(--text) 5%, var(--field)); border: 1px solid var(--border); }
+.pic-site, .pic-readme { width: 100%; max-width: 280px; border-radius: 10px; overflow: hidden; background: #fff; color: #1f2328; border: 1px solid rgba(0, 0, 0, 0.12); font-size: 11px; }
+.pic-bar { display: flex; align-items: center; gap: 5px; padding: 6px 8px; background: #f3f4f6; border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
+.pic-bar i { width: 6px; height: 6px; border-radius: 50%; background: #d0d4da; }
+.pic-bar span { margin-left: 6px; font-family: var(--mono); color: #8a8f98; }
+.pic-pencil { margin-left: auto !important; font-size: 12px; color: #2f7cf6 !important; }
+.pic-body { display: grid; gap: 5px; padding: 10px; }
+.pic-body b { display: block; height: 9px; width: 50%; border-radius: 3px; background: #1f2328; }
+.pic-readme .pic-body b { height: auto; width: auto; background: none; font-size: 13px; padding-bottom: 4px; border-bottom: 1px solid #e5e7eb; }
+.pic-body i { height: 5px; border-radius: 3px; background: #e5e7eb; }
+.pic-body i.short { width: 60%; }
+.pic-slot {
+  display: grid; place-items: center; height: 58px; margin-top: 4px; border-radius: 8px; font: 600 10.5px/1 var(--mono); color: var(--accent);
+  border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); animation: slot 2.4s ease-in-out infinite;
+}
+@keyframes slot { 50% { background: color-mix(in srgb, var(--accent) 18%, transparent); } }
+.pic-chat { display: grid; gap: 5px; justify-items: end; width: 100%; max-width: 260px; }
+.pic-msg { padding: 7px 11px; border-radius: 14px 14px 4px 14px; background: #2f7cf6; color: #fff; font-size: 12px; }
+.pic-link { font: 11px var(--mono); background: #e9e9ee; color: #1f2328; border: 1.5px dashed var(--accent); }
+
+/* fine-tuning folds away until wanted */
+.fine { border-top: 1px solid var(--border); padding: 12px 0 4px; }
+.fine summary { cursor: pointer; font-weight: 600; color: var(--muted); list-style: none; display: flex; align-items: center; gap: 8px; }
+.fine summary::before { content: '▸'; transition: transform 0.2s; }
+.fine[open] summary::before { transform: rotate(90deg); }
+.fine summary::-webkit-details-marker { display: none; }
+.fine section:first-of-type { border-top: 0; }

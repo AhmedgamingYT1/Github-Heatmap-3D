@@ -18,6 +18,12 @@
         <select id="year"></select>
         <button type="submit">Load</button>
       </form>
+      <ol class="guide" id="guide" aria-label="How it works">
+        <li><button type="button" data-step="1"><b>1</b>Username</button></li>
+        <li><button type="button" data-step="2"><b>2</b>World</button></li>
+        <li><button type="button" data-step="3"><b>3</b>Angle</button></li>
+        <li><button type="button" data-step="4"><b>4</b>Share</button></li>
+      </ol>
       <div id="status"></div>
       <div class="player" id="player" hidden>
         <button type="button" id="playSong" class="play-btn" aria-label="Play your year as a song">▶</button>
@@ -52,7 +58,7 @@
         <button id="exportStl" type="button">Download STL</button>
         <div class="legend">Less <span id="legend" style="display: contents"></span> More</div>
       </div>
-      <button id="openDrawer" type="button" class="primary">Customize &amp; Embed</button>
+      <button id="openDrawer" type="button" class="primary">Share &amp; embed <span aria-hidden="true">→</span></button>
     </div>
 
     <!-- preview: every panel out of the way, just the model -->
@@ -61,12 +67,58 @@
       Show controls
     </button>
 
-    <aside class="panel drawer" id="drawer" hidden aria-label="Customize and embed">
+    <aside class="panel drawer" id="drawer" hidden aria-label="Share your year">
       <div class="drawer-head">
-        <h2>Customize &amp; Embed</h2>
+        <h2>Share your year</h2>
         <button type="button" id="closeDrawer" class="icon" aria-label="Close">✕</button>
       </div>
 
+      <section class="share-step">
+        <h3><b>1</b> Where will it go?</h3>
+        <div class="dests" id="dests" role="radiogroup" aria-label="Destination">
+          <button type="button" role="radio" data-dest="website" aria-checked="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></svg>
+            <span><b>Website</b><small>Portfolio, blog or docs</small></span>
+          </button>
+          <button type="button" role="radio" data-dest="readme" aria-checked="false">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+            <span><b>GitHub README</b><small>Your profile page</small></span>
+          </button>
+          <button type="button" role="radio" data-dest="link" aria-checked="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+            <span><b>Link</b><small>Chat, post or CV</small></span>
+          </button>
+        </div>
+        <div class="tabs kinds" id="embedKind" role="tablist" aria-label="Embed as">
+          <button type="button" role="tab" data-tab="website" aria-selected="true">iframe</button>
+          <button type="button" role="tab" data-tab="script" aria-selected="false">Script tag</button>
+        </div>
+      </section>
+
+      <section class="share-step">
+        <h3><b>2</b> Copy the code</h3>
+        <p class="hint" id="tabHint"></p>
+        <label class="field" id="readmeTypeField" hidden>Picture <select id="readmeType"></select></label>
+        <div class="size" id="sizeFields">
+          <label>Width <input type="text" id="embedWidth" value="100%" /></label>
+          <label>Height <input type="text" id="embedHeight" value="420" /></label>
+        </div>
+        <pre id="code"></pre>
+        <div class="buttons">
+          <button type="button" id="copy" class="primary">Copy code</button>
+          <a id="previewLink" target="_blank" rel="noopener">Open preview ↗</a>
+        </div>
+        <img id="readmePreview" alt="README image preview" hidden />
+      </section>
+
+      <section class="share-step">
+        <h3><b>3</b> Add it</h3>
+        <div class="howto-pic" id="howtoPic" aria-hidden="true"></div>
+        <ol class="howto" id="howto"></ol>
+      </section>
+
+      <details class="fine">
+        <summary>Fine-tune the look, motion and starting view</summary>
       <section>
         <h3>Look</h3>
         <label class="range">Bar size <input type="range" data-opt="barSize" min="0.3" max="1" step="0.02" /></label>
@@ -95,28 +147,7 @@
         </div>
         <p class="hint" id="cameraStatus"></p>
       </section>
-
-      <section>
-        <h3>Get the code</h3>
-        <div class="tabs" role="tablist">
-          <button type="button" role="tab" data-tab="website" aria-selected="true">Website</button>
-          <button type="button" role="tab" data-tab="script">Script</button>
-          <button type="button" role="tab" data-tab="readme">README</button>
-          <button type="button" role="tab" data-tab="link">Link</button>
-        </div>
-        <p class="hint" id="tabHint"></p>
-        <label class="field" id="readmeTypeField" hidden>Image <select id="readmeType"></select></label>
-        <div class="size" id="sizeFields">
-          <label>Width <input type="text" id="embedWidth" value="100%" /></label>
-          <label>Height <input type="text" id="embedHeight" value="420" /></label>
-        </div>
-        <pre id="code"></pre>
-        <div class="buttons">
-          <button type="button" id="copy" class="primary">Copy code</button>
-          <a id="previewLink" target="_blank" rel="noopener">Open preview ↗</a>
-        </div>
-        <img id="readmePreview" alt="README image preview" hidden />
-      </section>
+      </details>
     </aside>
 
     <script type="module" src="/src/main.js"></script>

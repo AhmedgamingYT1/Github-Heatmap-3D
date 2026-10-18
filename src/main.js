@@ -36,6 +36,42 @@ const HOW_TO = matchMedia('(pointer: coarse)').matches ? 'Drag to rotate · pinc
 const map = createHeatmap($('app'), { ...state, homeZoom: PHONE ? 1.7 : 1, maxFps: 60, ...(PHONE && { detail: 'low', shadowMapSize: 1024, maxPixelRatio: 1.5 }) });
 if (import.meta.env.DEV) window.__heatmap = map; // for debugging in the console
 
+// ---------- the guide: username → world → angle → share ----------
+// Each step lights up when it's done; clicking one takes you to it.
+const done = new Set();
+function markStep(n) {
+  done.add(n);
+  syncGuide();
+}
+function syncGuide() {
+  const next = [1, 2, 3, 4].find((n) => !done.has(n)) ?? 0;
+  for (const b of $('guide').querySelectorAll('button')) {
+    const n = Number(b.dataset.step);
+    b.toggleAttribute('data-done', done.has(n));
+    b.toggleAttribute('data-next', n === next);
+  }
+}
+function nudge(el) {
+  el.classList.remove('nudge');
+  void el.offsetWidth;
+  el.classList.add('nudge');
+}
+$('guide').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-step]');
+  if (!b) return;
+  setPreview(false);
+  const n = Number(b.dataset.step);
+  if (n === 1) $('username').focus();
+  if (n === 2) nudge($('controls'));
+  if (n === 3) nudge(document.querySelector('.studio-pad'));
+  if (n === 4) setDrawer(true);
+});
+if (state.user) markStep(1);
+// dragging the model or using the camera pad counts as finding your angle
+addEventListener('pointerdown', (e) => {
+  if (e.target.closest('#app canvas, .studio-pad')) markStep(3);
+});
+
 // ---------- camera pad + preview ----------
 // Preview hides every panel so only the model is left; "Show controls" brings them back.
 const previewBtn = document.createElement('button');
@@ -65,7 +101,10 @@ function update(patch) {
   if ('theme' in patch) state.theme = getTheme(state.theme);
   if ('style' in patch) state.style = getStyle(state.style);
   map.setOptions(patch);
-  if ('theme' in patch || 'style' in patch || 'palette' in patch) applyPageTheme();
+  if ('theme' in patch || 'style' in patch || 'palette' in patch) {
+    applyPageTheme();
+    markStep(2);
+  }
   syncInputs();
   syncUrl();
   renderCode();
@@ -165,6 +204,7 @@ map.on('error', (err) => setStatus(err.message, true));
 map.on('building', () => setStatus('Growing your forest…'));
 map.on('built', () => setStatus(HOW_TO));
 map.on('load', ({ user, year, days }) => {
+  if (user) markStep(1);
   setStatus(user ? HOW_TO : 'Showing sample data — enter a GitHub username.');
   const { total, best, longest } = computeStats(days);
   $('stats').hidden = false;
@@ -256,6 +296,7 @@ $('clearCamera').addEventListener('click', () => update({ camera: null }));
 
 // ---------- drawer ----------
 function setDrawer(open) {
+  if (open) markStep(4);
   $('drawer').hidden = !open;
   document.body.classList.toggle('drawer-open', open);
   if (open) renderCode();
@@ -272,10 +313,42 @@ addEventListener('keydown', (e) => {
 let tab = 'website';
 
 const TAB_HINTS = {
-  website: 'Paste into any HTML page — fully interactive 3D.',
-  script: 'Paste where the model should appear. Options are data-* attributes you can edit by hand.',
-  readme: 'GitHub READMEs only allow images. Pick a 3D picture of your saved view or a 2D design; clicking it opens the interactive version.',
-  link: 'A direct link to this exact view.',
+  website: 'One line of HTML with the live, spinnable 3D. Set the size it should take on your page.',
+  script: 'Same live 3D, as a div plus a small script. Every option is a data-* attribute you can edit by hand.',
+  readme: 'READMEs only show images, so this is a picture of your current view (or a 2D card) that links to the live 3D.',
+  link: 'A link to exactly this view: your world, colors and angle.',
+};
+
+// Step 3: how to put it where it goes, with a little picture of the place.
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+function howTo() {
+  const user = esc(state.user || 'your-username');
+  const web = [
+    'Press <b>Copy code</b> above.',
+    'Open your page’s HTML, or the <b>Embed</b> / <b>Custom code</b> block of your site builder (WordPress, Webflow, Framer, Squarespace…).',
+    'Paste it where the model should appear, then publish.',
+  ];
+  return {
+    website: { steps: web, pic: 'site' },
+    script: { steps: [...web.slice(0, 2), 'Paste it where the model should appear and publish. Several models? The script only loads once.'], pic: 'site' },
+    readme: {
+      steps: [
+        'Press <b>Copy code</b> above.',
+        `Open <b>github.com/${user}/${user}</b>: the repository named after you, whose README shows on your profile. No such repository? Create a public one named exactly <b>${user}</b> and tick “Add a README”.`,
+        'Click the pencil on <b>README.md</b>, paste the line, then <b>Commit changes</b>. The picture refreshes every hour.',
+      ],
+      pic: 'readme',
+    },
+    link: {
+      steps: ['Press <b>Copy code</b> above.', 'Paste it anywhere: a chat, a post, your CV or your bio.', 'Whoever opens it gets the live 3D, no account needed.'],
+      pic: 'link',
+    },
+  }[tab];
+}
+const PICS = {
+  site: `<div class="pic-site"><div class="pic-bar"><i></i><i></i><i></i><span>yourname.dev</span></div><div class="pic-body"><b></b><i></i><i class="short"></i><div class="pic-slot">your 3D year goes here</div></div></div>`,
+  readme: () => `<div class="pic-readme"><div class="pic-bar">${esc(state.user || 'you')} / <b>README.md</b> <span class="pic-pencil">✎</span></div><div class="pic-body"><b>Hi there</b><i></i><div class="pic-slot">your picture goes here</div></div></div>`,
+  link: `<div class="pic-chat"><span class="pic-msg">Here’s my year!</span><span class="pic-msg pic-link">github-heatmap-3d…/studio.html?user=…</span></div>`,
 };
 
 const kebab = (s) => s.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
@@ -314,6 +387,10 @@ function renderCode() {
   }
 
   $('code').textContent = code;
+  const how = howTo();
+  $('howto').innerHTML = how.steps.map((t) => `<li>${t}</li>`).join('');
+  const pic = PICS[how.pic];
+  $('howtoPic').innerHTML = typeof pic === 'function' ? pic() : pic;
   $('previewLink').href = preview;
   $('tabHint').textContent = TAB_HINTS[tab];
   $('sizeFields').hidden = !(tab === 'website' || tab === 'script');
@@ -321,13 +398,25 @@ function renderCode() {
   $('readmePreview').hidden = tab !== 'readme';
 }
 
-for (const b of document.querySelectorAll('[data-tab]')) {
-  b.addEventListener('click', () => {
-    tab = b.dataset.tab;
-    for (const o of document.querySelectorAll('[data-tab]')) o.setAttribute('aria-selected', o === b);
-    renderCode();
-  });
+// Step 1: where it goes. A website can take an iframe or a script tag.
+let webKind = 'website';
+function setTab(t) {
+  tab = t;
+  if (t === 'website' || t === 'script') webKind = t;
+  const dest = t === 'script' ? 'website' : t;
+  for (const b of $('dests').children) b.setAttribute('aria-checked', b.dataset.dest === dest);
+  for (const b of $('embedKind').children) b.setAttribute('aria-selected', b.dataset.tab === t);
+  $('embedKind').hidden = dest !== 'website';
+  renderCode();
 }
+$('dests').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-dest]');
+  if (b) setTab(b.dataset.dest === 'website' ? webKind : b.dataset.dest);
+});
+$('embedKind').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-tab]');
+  if (b) setTab(b.dataset.tab);
+});
 $('embedWidth').addEventListener('input', renderCode);
 for (const [id, name] of [['3d', '3D board (City)'], ...Object.entries(CHART_TYPES)]) $('readmeType').add(new Option(name, id));
 $('readmeType').addEventListener('change', renderCode);
@@ -347,4 +436,6 @@ $('copy').addEventListener('click', async () => {
 applyPageTheme();
 syncInputs();
 syncUrl();
+syncGuide();
+setTab('website');
 suggestDesktop();
