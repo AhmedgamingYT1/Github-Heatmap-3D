@@ -53,12 +53,13 @@ function syncGuide() {
   const next = [1, 2, 3, 4].find((n) => !done.has(n)) ?? 0;
   for (const b of $('guide').querySelectorAll('button')) {
     const n = Number(b.dataset.step);
-    b.toggleAttribute('data-done', done.has(n));
-    b.toggleAttribute('data-next', n === next);
-    b.toggleAttribute('data-locked', n > 1 && !hasYear());
+    for (const el of [b, b.parentElement]) {
+      el.toggleAttribute('data-done', done.has(n));
+      el.toggleAttribute('data-next', n === next);
+      el.toggleAttribute('data-locked', n > 1 && !hasYear());
+    }
   }
   $('openDrawer').toggleAttribute('data-locked', !hasYear());
-  $('progressFill').style.width = `${(done.size / 4) * 100}%`;
 }
 function nudge(el) {
   el.classList.remove('nudge');
@@ -110,7 +111,10 @@ function showStep(n, why = '') {
   $('popText').textContent = why || st.text;
   $('popText').classList.toggle('pop-warn', Boolean(why));
   $('popActions').innerHTML = st.actions() + (n < 4 ? `<button type="button" class="pop-next" data-next-step="${n + 1}">Next: ${STEPS[n + 1].title} →</button>` : '');
-  $('pop').style.setProperty('--x', `${(n - 1) * 25 + 12.5}%`);
+  // point the arrow at the step's circle
+  const circle = $('guide').querySelector(`[data-step="${n}"] b`).getBoundingClientRect();
+  const box = $('pop').getBoundingClientRect();
+  $('pop').style.setProperty('--x', `${circle.left + circle.width / 2 - box.left}px`);
   if (n === 1) $('popUser').focus();
   if (n === 2) nudge($('controls'));
   if (n === 3) nudge(document.querySelector('.studio-pad'));

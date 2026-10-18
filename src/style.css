@@ -286,27 +286,44 @@ body.preview .panel { opacity: 0; visibility: hidden; }
 .brand-mark i:nth-child(3) { height: 15px; }
 .brand-row .studio-tag { margin-left: auto; }
 
-/* ---------- progress bar, top center ---------- */
-.progress { top: 16px; left: 50%; transform: translateX(-50%); width: min(460px, calc(100vw - 32px)); padding: 10px 12px; border-radius: 18px; z-index: 3; }
-.progress-track { position: absolute; left: 12.5%; right: 12.5%; top: 24px; height: 3px; margin: 0 12px; border-radius: 3px; background: var(--border); }
-.progress-track i { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--accent); transition: width 0.6s var(--ease); }
-.guide { position: relative; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); }
+/* ---------- progress, top center: a stepper ---------- */
+.progress { top: 16px; left: 50%; transform: translateX(-50%); width: min(620px, calc(100vw - 32px)); padding: 8px 8px 8px 12px; border-radius: 999px; z-index: 3; }
+.progress .guide { flex: 1; }
+.guide { position: relative; list-style: none; margin: 0; padding: 0; display: flex; align-items: center; }
+.guide li { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; }
+.guide li:last-child { flex: none; }
+.guide li:not(:last-child)::after { /* the line to the next step, filled once this one is done */
+  content: ''; flex: 1 1 18px; min-width: 14px; height: 2px; margin: 0 10px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent) 50%, var(--border) 50%) right / 200% 100% no-repeat; transition: background-position 0.5s var(--ease);
+}
+.guide li[data-done]:not(:last-child)::after { background-position: left; }
 .guide button {
-  width: 100%; display: grid; justify-items: center; gap: 4px; padding: 0; border: 0; background: none; border-radius: 10px;
-  font-size: 12px; font-weight: 550; color: var(--muted);
+  display: flex; align-items: center; gap: 9px; padding: 5px 10px 5px 5px; border: 0; border-radius: 999px; background: none;
+  text-align: left; white-space: nowrap; color: var(--muted); transition: background 0.2s, color 0.2s;
 }
-.guide button:hover { background: none; color: var(--text); }
+.guide button:hover { background: var(--button); color: var(--text); }
+.guide button[aria-expanded='true'] { background: var(--button-hover); color: var(--text); }
+.guide button > span { display: grid; line-height: 1.15; }
+.guide strong { font-size: 13px; font-weight: 600; }
+.guide small { font-size: 11px; color: var(--muted); }
 .guide b {
-  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 11.5px/1 var(--mono);
-  color: var(--muted); background: var(--panel); border: 1.5px solid var(--border); transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+  flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; position: relative;
+  font: 700 12px/1 var(--mono); color: var(--muted); background: var(--field); border: 1.5px solid var(--border);
+  transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
-.guide button[data-done] { color: var(--text); }
-.guide button[data-done] b { color: #fff; background: var(--accent); border-color: var(--accent); font-size: 0; }
-.guide button[data-done] b::after { content: '✓'; font-size: 12px; }
 .guide button[data-next] { color: var(--text); }
-.guide button[data-next] b { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent); animation: beckon 2s ease-in-out infinite; }
-.guide button[aria-expanded='true'] b { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent); }
-@keyframes beckon { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 8%, transparent); } }
+.guide button[data-next] b { color: #fff; background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent); animation: beckon 2.2s ease-in-out infinite; }
+.guide button[data-done] { color: var(--text); }
+.guide button[data-done] b { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--field)); border-color: color-mix(in srgb, var(--accent) 45%, transparent); font-size: 0; }
+.guide button[data-done] b::after, .guide button[data-locked] b::after {
+  content: ''; width: 14px; height: 14px; background: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat;
+}
+.guide button[data-done] b { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5 6.5 11.5 12.5 4.5' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.guide button[data-locked] { opacity: 0.5; }
+.guide button[data-locked] b { font-size: 0; --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='3' y='7' width='10' height='7' rx='2'/%3E%3Cpath d='M5.5 7V5a2.5 2.5 0 0 1 5 0v2' fill='none' stroke='%23000' stroke-width='1.6'/%3E%3C/svg%3E"); }
+.guide button[data-locked] b::after { width: 12px; height: 12px; }
+@keyframes beckon { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 6%, transparent); } }
 /* the little guide that pops out of a step */
 .pop {
   position: absolute; top: calc(100% + 12px); left: 50%; transform: translateX(-50%); width: min(360px, calc(100vw - 32px));
@@ -420,9 +437,6 @@ form { margin-top: 10px; }
 /* phones: the progress bar runs across the top, numbers only */
 @media (max-width: 640px) {
   .progress { top: max(10px, env(safe-area-inset-top)); left: 10px; right: 10px; width: auto; transform: none; padding: 8px; }
-  .progress-track { top: 20px; }
-  .guide button span { font-size: 10.5px; }
-  .guide b { width: 24px; height: 24px; }
   header.panel { top: 82px !important; }
   .pop { width: calc(100vw - 20px); }
 }
@@ -434,20 +448,28 @@ form { margin-top: 10px; }
 #openDrawer[data-locked] { opacity: 0.55; }
 .pop p.pop-warn { color: var(--text); padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 14%, transparent); }
 
-/* ---------- Preview, always in sight next to the progress ---------- */
-.progress { display: flex; align-items: center; gap: 12px; width: min(560px, calc(100vw - 32px)); }
-.progress .guide { flex: 1; }
-.progress-track { right: auto; width: calc((100% - 120px) * 0.75); left: calc((100% - 120px) * 0.125 + 12px); margin: 0; }
+/* ---------- Preview, always in sight at the end of the progress ---------- */
+.progress { display: flex; align-items: center; gap: 14px; }
 .preview-top {
-  flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; font-weight: 600; font-size: 13px;
-  color: #fff; background: var(--accent); border-color: transparent; box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent);
+  flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; font-weight: 600; font-size: 13px;
+  color: var(--text); background: var(--button); border: 1px solid var(--border);
 }
-.preview-top:hover { background: var(--accent); filter: brightness(1.08); }
-.preview-top svg { width: 16px; height: 16px; }
+.preview-top:hover { background: var(--button-hover); }
+.preview-top svg { width: 16px; height: 16px; color: var(--accent); }
+.progress::before { /* a hairline between the steps and Preview */
+  content: ''; order: 1; width: 1px; height: 26px; background: var(--border);
+}
+.preview-top { order: 2; }
+@media (max-width: 1100px) {
+  .guide small { display: none; }
+}
 @media (max-width: 640px) {
+  .progress { padding: 6px 6px 6px 8px; border-radius: 22px; }
+  .guide strong { display: none; }
+  .guide button[data-next] strong, .guide button[aria-expanded='true'] strong { display: block; font-size: 12px; }
+  .guide li:not(:last-child)::after { margin: 0 4px; min-width: 6px; }
   .preview-top { padding: 8px 10px; font-size: 0; gap: 0; }
   .preview-top svg { width: 18px; height: 18px; }
-  .progress-track { width: calc((100% - 52px) * 0.75); left: calc((100% - 52px) * 0.125 + 8px); }
 }
 
 /* ---------- the paywall ---------- */
