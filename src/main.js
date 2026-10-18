@@ -11,7 +11,7 @@ import { composeSong, createSongPlayer, renderSongWav } from './lib/song.js';
 import { CHART_TYPES } from './lib/charts.js';
 import { createViewPad } from './lib/viewpad.js';
 import { suggestDesktop } from './lib/desktop-hint.js';
-import { owns, signInAvailable, signInWithGoogle, currentAccount, onAccountChange } from './lib/account.js';
+import { owns, signInAvailable, signInWithGoogle, currentAccount, onAccountChange, startAccounts, mountAccountButton } from './lib/account.js';
 import { pricesFor, money, guessCountry } from './lib/pricing.js';
 import { openRegionPicker } from './lib/region-picker.js';
 
@@ -655,19 +655,68 @@ $('payPlans').addEventListener('click', (e) => {
 });
 $('payClose').addEventListener('click', () => $('paywall').close());
 $('paywall').addEventListener('click', (e) => e.target === $('paywall') && $('paywall').close());
+const PENDING = 'pay-after-sign-in'; // Google sign-in may leave the page; reopen the paywall on return
+function signedInNote() {
+  const who = currentAccount();
+  $('payNote').textContent = `Signed in as ${who?.email || who?.name}. Secure checkout opens very soon; we’ll keep your choice for when it does.`;
+  $('payNote').classList.add('pay-warn');
+  $('payPlans').closest('.paywall').querySelectorAll('.pay-steps li').forEach((li, k) => li.classList.toggle('on', k <= 1));
+}
 $('googleBtn').addEventListener('click', async () => {
   const note = $('payNote');
   try {
-    if (!currentAccount()) await signInWithGoogle();
+    if (!currentAccount()) {
+      try {
+        sessionStorage.setItem(PENDING, JSON.stringify({ item: payItem, plan: payPlan }));
+      } catch {}
+      $('paywall').close(); // Clerk's sign-in window opens on top of the page
+      await signInWithGoogle();
+      sessionStorage.removeItem(PENDING);
+      openPaywall(payItem);
+    }
     // signed in: the next stop is checkout, which isn't connected yet
-    note.textContent = 'You’re signed in. Secure checkout opens very soon; we’ll keep your choice for when it does.';
-    note.classList.add('pay-warn');
+    signedInNote();
   } catch (err) {
     note.textContent = err.message === 'setup' ? 'Google sign-in and checkout are being connected and open very soon. Until then you can try every world here for free.' : err.message;
     note.classList.add('pay-warn');
   }
 });
 if (!signInAvailable()) $('googleBtn').title = 'Opening soon';
+// the account button in the top-left card: Sign in, or Clerk's avatar menu once signed in
+let accountShown = '';
+function syncAccountButton(a) {
+  const id = a?.id || '';
+  if (id === accountShown) return;
+  accountShown = id;
+  const slot = $('account');
+  if (a) {
+    slot.innerHTML = '';
+    mountAccountButton(slot);
+  } else {
+    slot.innerHTML = '<button type="button" class="signin-btn" id="signInBtn">Sign in</button>';
+  }
+}
+$('account').addEventListener('click', (e) => {
+  if (!e.target.closest('#signInBtn')) return;
+  if (!signInAvailable()) return showStep(1, 'Accounts open very soon. Everything here works without one for now.');
+  signInWithGoogle().catch(() => {});
+});
+onAccountChange((a) => {
+  syncAccountButton(a);
+  // back from Google with a paywall to finish: open it again where they left off
+  let pending = null;
+  try {
+    pending = JSON.parse(sessionStorage.getItem(PENDING) || 'null');
+  } catch {}
+  if (a && pending && !$('paywall').open) {
+    sessionStorage.removeItem(PENDING);
+    payPlan = pending.plan || payPlan;
+    openPaywall(pending.item);
+    signedInNote();
+  }
+});
+startAccounts();
+
 // a purchase lands (the server updates the account): close the paywall and carry on
 onAccountChange(() => {
   if (!$('paywall').open || !owns(payItem)) return;

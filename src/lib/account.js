@@ -1,26 +1,19 @@
 // Accounts and what they own.
 //
-// Sign-in is Google, through Firebase Authentication. What an account owns lives in
-// Firestore at users/{uid} as { entitlements: ['pro'] or ['galaxy', 'song', …] }, written
-// only by our server when a payment succeeds (see firestore.rules). The browser reads it
-// to decide what to show; it can't grant itself anything.
-//
-// Firebase switches on when the site is built with the VITE_FIREBASE_* settings (see
-// .env.example). Without them, sign-in says it's opening soon and nobody owns Pro.
+// Sign-in is Clerk (Google only, set in the Clerk dashboard). Clerk loads after the page
+// so it never slows the first paint. Once someone is signed in we ask our own server
+// (/api/me), which checks the Clerk session, keeps the person in our Neon database and
+// says what they own. The browser only uses that to decide what to show; the server is
+// where purchases are recorded and checked.
 
-const env = import.meta.env;
-const CONFIG = {
-  apiKey: env.VITE_FIREBASE_API_KEY,
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: env.VITE_FIREBASE_PROJECT_ID,
-  appId: env.VITE_FIREBASE_APP_ID,
-};
+const KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '';
 
-let account = null; // { uid, name, email, picture, entitlements }
+let clerkPromise = null;
+let account = null; // { id, name, email, picture, entitlements }
 const listeners = new Set();
 const changed = () => listeners.forEach((fn) => fn(account));
 
-export const signInAvailable = () => Boolean(CONFIG.apiKey && CONFIG.projectId);
+export const signInAvailable = () => Boolean(KEY);
 export const currentAccount = () => account;
 export const onAccountChange = (fn) => (listeners.add(fn), () => listeners.delete(fn));
 
@@ -30,60 +23,83 @@ export function owns(item) {
   return e.includes('pro') || e.includes(item);
 }
 
-// Firebase is large, so it loads on first use (sign-in, or a returning signed-in visitor).
-let firebase = null;
-async function load() {
-  if (firebase) return firebase;
-  const [{ initializeApp }, auth, store] = await Promise.all([import('firebase/app'), import('firebase/auth'), import('firebase/firestore')]);
-  const app = initializeApp(CONFIG);
-  firebase = { auth, store, a: auth.getAuth(app), db: store.getFirestore(app) };
-  // keep `account` in step with Firebase's session, and with the account's purchases
-  let stopDoc = null;
-  auth.onAuthStateChanged(firebase.a, (user) => {
-    stopDoc?.();
-    if (!user) {
+function loadClerk() {
+  clerkPromise ||= (async () => {
+    // Clerk's UI is bundled with the site rather than fetched from Clerk's CDN at run time
+    const [{ Clerk }, { ui }] = await Promise.all([import('@clerk/clerk-js'), import('@clerk/ui')]);
+    const clerk = new Clerk(KEY);
+    await clerk.load({ ui: { ClerkUI: ui.ClerkUI }, appearance: { variables: { borderRadius: '14px' } } });
+    clerk.addListener(({ user }) => sync(user));
+    if (import.meta.env.DEV) window.__clerk = clerk; // for testing sign-in locally
+    return clerk;
+  })();
+  return clerkPromise;
+}
+
+let syncedFor = '';
+async function sync(user) {
+  if (!user) {
+    syncedFor = '';
+    if (account) {
       account = null;
-      remember(false);
-      return changed();
-    }
-    account = { uid: user.uid, name: user.displayName, email: user.email, picture: user.photoURL, entitlements: [] };
-    remember(true);
-    changed();
-    stopDoc = store.onSnapshot(store.doc(firebase.db, 'users', user.uid), (snap) => {
-      account = { ...account, entitlements: snap.data()?.entitlements ?? [] };
       changed();
-    });
-  });
-  return firebase;
-}
-
-// Only bring Firebase in on page load for people who signed in before.
-const KEY = 'signed-in';
-function remember(on) {
-  try {
-    on ? localStorage.setItem(KEY, '1') : localStorage.removeItem(KEY);
-  } catch {}
-}
-try {
-  if (signInAvailable() && localStorage.getItem(KEY)) load();
-} catch {}
-
-/** Google sign-in in a popup. Resolves with the account, or rejects with a readable reason. */
-export async function signInWithGoogle() {
-  if (!signInAvailable()) throw new Error('setup');
-  const { auth, a } = await load();
-  try {
-    const { user } = await auth.signInWithPopup(a, new auth.GoogleAuthProvider());
-    account ||= { uid: user.uid, name: user.displayName, email: user.email, picture: user.photoURL, entitlements: [] };
-  } catch (err) {
-    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') throw new Error('Sign-in was closed before it finished.');
-    if (err.code === 'auth/popup-blocked') throw new Error('Your browser blocked the sign-in window. Allow pop-ups for this site and try again.');
-    throw new Error('Google sign-in didn’t work this time. Please try again.');
+    }
+    return;
   }
-  return account;
+  if (syncedFor === user.id) return;
+  syncedFor = user.id;
+  account = {
+    id: user.id,
+    name: user.fullName || user.firstName || '',
+    email: user.primaryEmailAddress?.emailAddress || '',
+    picture: user.imageUrl,
+    entitlements: [],
+  };
+  changed();
+  try {
+    const clerk = await loadClerk();
+    const res = await fetch('/api/me', { headers: { Authorization: `Bearer ${await clerk.session.getToken()}` } });
+    if (!res.ok) throw new Error(`api/me ${res.status}`);
+    const me = await res.json();
+    account = { ...account, entitlements: me.entitlements };
+    changed();
+  } catch (err) {
+    console.warn('Could not load what this account owns', err);
+  }
+}
+
+/** Start Clerk in the background, so a returning visitor is signed in again. */
+export function startAccounts() {
+  if (!KEY) return;
+  const go = () => loadClerk().catch((err) => console.warn('Clerk did not load', err));
+  'requestIdleCallback' in window ? requestIdleCallback(go, { timeout: 2500 }) : setTimeout(go, 800);
+}
+
+/**
+ * Opens Clerk's sign-in (Google). Resolves with the account once signed in.
+ * Google's sign-in may leave the page and come back; `returnTo` is where it lands.
+ */
+export async function signInWithGoogle({ returnTo = location.href } = {}) {
+  if (!KEY) throw new Error('setup');
+  const clerk = await loadClerk();
+  if (clerk.user) return account;
+  return new Promise((resolve) => {
+    const stop = clerk.addListener(({ user }) => {
+      if (!user) return;
+      stop();
+      resolve(account);
+    });
+    clerk.openSignIn({ forceRedirectUrl: returnTo, signUpForceRedirectUrl: returnTo });
+  });
+}
+
+/** Clerk's account button (avatar menu with sign-out) inside `el`. */
+export async function mountAccountButton(el) {
+  const clerk = await loadClerk();
+  clerk.mountUserButton(el);
 }
 
 export async function signOut() {
-  if (!firebase) return;
-  await firebase.auth.signOut(firebase.a);
+  const clerk = await loadClerk();
+  await clerk.signOut();
 }
