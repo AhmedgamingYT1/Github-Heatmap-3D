@@ -374,8 +374,8 @@
         <h2>Start free. Go Pro for the good stuff.</h2>
       </div>
       <div class="billing seg" id="billing" role="radiogroup" aria-label="Billing period">
-        <button type="button" role="radio" data-bill="month" aria-checked="true">Monthly</button>
-        <button type="button" role="radio" data-bill="year" aria-checked="false">Yearly <span class="save">save 40%</span></button>
+        <button type="button" role="radio" data-bill="year" aria-checked="true">Yearly <span class="save">save 40%</span></button>
+        <button type="button" role="radio" data-bill="month" aria-checked="false">Monthly</button>
         <span class="seg-glider" aria-hidden="true"></span>
       </div>
       <div class="plans">
@@ -401,8 +401,8 @@
               <img src="/previews/forest.jpg" alt="" loading="lazy" />
             </div>
             <p class="plan-sub">Every world, your song and every design.</p>
-            <div class="price pro-price"><span id="proPrice">$4</span><small id="proPer">/ month</small></div>
-            <p class="pro-billed" id="proBilled">Billed monthly. Cancel anytime.</p>
+            <div class="price pro-price"><span id="proPrice">$0.08</span><small id="proPer">a day</small><s class="pro-was" id="proWas">$0.13</s></div>
+            <p class="pro-billed" id="proBilled">$29 a year, that’s $2.42 a month. Cancel anytime.</p>
             <ul><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Night City, Galaxy and Forest</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Your year as a song, with download</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Every design, theme and palette</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Any year, HD images and STL</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>No badge on your embeds</li></ul>
             <button type="button" class="pill-btn pro-btn" data-checkout="pro">Get Pro <span aria-hidden="true">→</span></button>
           </div>
@@ -411,11 +411,19 @@
         <div class="bezel plan">
           <div class="bezel-in">
             <h3>Lifetime</h3>
-            <p class="plan-sub">Pay once. Pro forever.</p>
-            <div class="price">$49<small>once</small></div>
+            <p class="plan-sub">Pro forever, and every world we add.</p>
+            <div class="price">Once<small>$49, one payment</small></div>
             <ul><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Everything in Pro, forever</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Every new world as it ships</li><li><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5 7 11l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Your name on the supporters wall</li></ul>
             <button type="button" class="pill-btn pill-btn-ghost" data-checkout="lifetime">Get Lifetime</button>
           </div>
+        </div>
+      </div>
+      <div class="bezel one-world">
+        <div class="bezel-in one-in">
+          <div class="one-text"><b>Only want one world?</b><span>Keep a single design forever. No subscription.</span></div>
+          <div class="one-worlds"><span>Night City</span><span>Galaxy</span><span>Forest</span><span>Your song</span></div>
+          <div class="one-price"><b>$1.99</b><small>once, per world</small></div>
+          <button type="button" class="pill-btn pill-btn-ghost" data-checkout="world">Pick one</button>
         </div>
       </div>
       <p class="note" id="checkoutNote" role="status"></p>

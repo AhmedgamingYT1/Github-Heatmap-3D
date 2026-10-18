@@ -565,13 +565,14 @@ billing.addEventListener('click', (e) => {
   if (!b || b.getAttribute('aria-checked') === 'true') return;
   for (const x of billing.querySelectorAll('button')) x.setAttribute('aria-checked', x === b);
   moveBillingGlider();
+  // prices read per day; the full amount is always right under them
   const yearly = b.dataset.bill === 'year';
   const price = $('proPrice');
   price.classList.add('swap');
   setTimeout(() => {
-    price.textContent = yearly ? '$2.42' : '$4';
-    $('proPer').textContent = '/ month';
-    $('proBilled').textContent = yearly ? 'Billed $29 yearly. Cancel anytime.' : 'Billed monthly. Cancel anytime.';
+    price.textContent = yearly ? '$0.08' : '$0.13';
+    $('proWas').hidden = !yearly;
+    $('proBilled').textContent = yearly ? '$29 a year, that’s $2.42 a month. Cancel anytime.' : '$4 a month. Cancel anytime.';
     price.classList.remove('swap');
   }, 180);
 });
@@ -581,7 +582,7 @@ moveBillingGlider();
 
 for (const b of document.querySelectorAll('[data-checkout]')) {
   b.addEventListener('click', () => {
-    $('checkoutNote').textContent = 'Checkout isn’t open yet. Payments are coming next; until then everything is free in the Studio.';
+    $('checkoutNote').textContent = 'Checkout opens very soon, with Sign in with Google. Until then you can try every world in the Studio for free.';
   });
 }
 
