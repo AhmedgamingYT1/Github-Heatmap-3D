@@ -1,14 +1,24 @@
 import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
-// Serve the Vercel functions in /api during `npm run dev` too.
+// Serve the Vercel functions in /api during `npm run dev` too, with .env.local's
+// server-side settings (DATABASE_URL…) available to them as on Vercel.
 const devApi = {
   name: 'dev-api',
   configureServer(server) {
-    server.middlewares.use('/api/heatmap', async (req, res) => {
-      req.url = '/api/heatmap' + req.url; // connect strips the mount path
-      const { default: handler } = await server.ssrLoadModule('/api/heatmap.js');
-      handler(req, res);
+    Object.assign(process.env, loadEnv(server.config.mode, process.cwd(), ''));
+    server.middlewares.use('/api', async (req, res, next) => {
+      const name = req.url.split('?')[0].replace(/^\/+|\/+$/g, '');
+      if (!/^[a-z][a-z0-9-]*$/.test(name)) return next(); // files starting with _ are helpers, not routes
+      req.url = `/api${req.url}`; // connect strips the mount path
+      try {
+        const { default: handler } = await server.ssrLoadModule(`/api/${name}.js`);
+        await handler(req, res);
+      } catch (err) {
+        if (err.code === 'ERR_LOAD_URL' || /Failed to load url/.test(err.message)) return next();
+        res.statusCode = 500;
+        res.end(String(err.message));
+      }
     });
   },
 };
