@@ -1,0 +1,11 @@
+rules_version = '2';
+// Each account can read its own record (what it owns). Nobody can write from the
+// browser: entitlements are written only by our server (Admin SDK) after a payment.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+  }
+}

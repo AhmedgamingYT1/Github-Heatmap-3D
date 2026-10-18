@@ -11,7 +11,7 @@ import { composeSong, createSongPlayer, renderSongWav } from './lib/song.js';
 import { CHART_TYPES } from './lib/charts.js';
 import { createViewPad } from './lib/viewpad.js';
 import { suggestDesktop } from './lib/desktop-hint.js';
-import { owns, signInAvailable, signInWithGoogle, currentAccount } from './lib/account.js';
+import { owns, signInAvailable, signInWithGoogle, currentAccount, onAccountChange } from './lib/account.js';
 import { pricesFor, money, guessCountry } from './lib/pricing.js';
 import { openRegionPicker } from './lib/region-picker.js';
 
@@ -668,3 +668,10 @@ $('googleBtn').addEventListener('click', async () => {
   }
 });
 if (!signInAvailable()) $('googleBtn').title = 'Opening soon';
+// a purchase lands (the server updates the account): close the paywall and carry on
+onAccountChange(() => {
+  if (!$('paywall').open || !owns(payItem)) return;
+  $('paywall').close();
+  if (payItem === 'song') $('downloadSong').click();
+  else setDrawer(true);
+});
