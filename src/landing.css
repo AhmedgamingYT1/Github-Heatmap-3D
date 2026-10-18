@@ -22,6 +22,11 @@
   /* surfaces and details that change between modes */
   --glass: rgba(19, 19, 23, 0.62);
   --nav-glass: rgba(19, 19, 23, 0.45);
+  /* Apple-style glass: see-through, heavily blurred and saturated, lit from the top edge */
+  --glass-bg: linear-gradient(180deg, rgba(44, 44, 52, 0.5), rgba(22, 22, 28, 0.32));
+  --glass-edge: rgba(255, 255, 255, 0.13);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.35);
+  --glass-filter: blur(26px) saturate(190%) brightness(1.05);
   --btn-bg: #ededef;
   --btn-bg-hover: #ffffff;
   --btn-fg: #0b0b0d;
@@ -55,6 +60,10 @@
   --pro: #3a63c9;
   --glass: rgba(255, 255, 255, 0.72);
   --nav-glass: rgba(255, 255, 255, 0.5);
+  --glass-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.32));
+  --glass-edge: rgba(255, 255, 255, 0.75);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(0, 0, 0, 0.04), 0 10px 36px rgba(40, 28, 12, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --glass-filter: blur(26px) saturate(190%) brightness(1.06);
   --btn-bg: #16151a;
   --btn-bg-hover: #000000;
   --btn-fg: #ffffff;
@@ -750,3 +759,16 @@ kbd { font: 500 11px/1 var(--mono); padding: 3px 5px; border-radius: 5px; backgr
   .tile-big { grid-column: 1 / -1; grid-row: auto; min-height: 200px; }
   .iphone { --w: 260px; }
 }
+
+/* ---------- glass everywhere it floats ---------- */
+.nav, .try, .hero-bar .seg, .dock, .hero-pad, .use-tabs, .plan-toggle, .billing, .filament, .show-live {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-filter) !important; -webkit-backdrop-filter: var(--glass-filter) !important;
+  border: 1px solid var(--glass-edge) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+.nav::before { /* a soft sheen across the top, like light on curved glass */
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent 55%); opacity: 0.5; mix-blend-mode: soft-light;
+}
+.hero-pad { --vp-bg: transparent; }

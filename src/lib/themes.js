@@ -143,8 +143,10 @@ export function applyThemeToPage(theme) {
   s.setProperty('--text', theme.text);
   s.setProperty('--muted', theme.label);
   s.setProperty('--accent', theme.accent);
-  s.setProperty('--panel', theme.dark ? 'rgba(22, 27, 34, 0.82)' : 'rgba(255, 255, 255, 0.72)');
+  s.setProperty('--panel', theme.dark ? 'rgba(22, 27, 34, 0.78)' : 'rgba(255, 255, 255, 0.7)');
   s.setProperty('--border', theme.dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)');
+  s.setProperty('--edge', theme.dark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.7)'); // glass edge
+  s.setProperty('--hi', theme.dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.85)'); // glass top light
   s.setProperty('--field', theme.dark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 255, 255, 0.9)');
   s.setProperty('--button', theme.dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)');
   s.setProperty('--button-hover', theme.dark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.1)');

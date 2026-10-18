@@ -11,6 +11,7 @@ import { composeSong, createSongPlayer, renderSongWav } from './lib/song.js';
 import { CHART_TYPES } from './lib/charts.js';
 import { createViewPad } from './lib/viewpad.js';
 import { suggestDesktop } from './lib/desktop-hint.js';
+import { owns, signInAvailable, signInWithGoogle, currentAccount } from './lib/account.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -41,16 +42,22 @@ if (import.meta.env.DEV) window.__heatmap = map; // for debugging in the console
 // controls for that step right inside, and a way on to the next.
 const done = new Set();
 function markStep(n) {
+  if (n > 1 && !hasYear()) return; // steps only count once your own year is in
   done.add(n);
   syncGuide();
 }
+// Nothing after step 1 opens until a real GitHub year is loaded.
+const hasYear = () => done.has(1);
+const NEED_YEAR = 'First things first: load your GitHub username. Everything after this uses your real year.';
 function syncGuide() {
   const next = [1, 2, 3, 4].find((n) => !done.has(n)) ?? 0;
   for (const b of $('guide').querySelectorAll('button')) {
     const n = Number(b.dataset.step);
     b.toggleAttribute('data-done', done.has(n));
     b.toggleAttribute('data-next', n === next);
+    b.toggleAttribute('data-locked', n > 1 && !hasYear());
   }
+  $('openDrawer').toggleAttribute('data-locked', !hasYear());
   $('progressFill').style.width = `${(done.size / 4) * 100}%`;
 }
 function nudge(el) {
@@ -88,7 +95,11 @@ const STEPS = {
   },
 };
 let openStep = 0;
-function showStep(n) {
+function showStep(n, why = '') {
+  if (n > 1 && !hasYear()) {
+    why = NEED_YEAR;
+    n = 1;
+  }
   openStep = n;
   $('pop').hidden = !n;
   for (const b of $('guide').querySelectorAll('button')) b.setAttribute('aria-expanded', Number(b.dataset.step) === n);
@@ -96,7 +107,8 @@ function showStep(n) {
   const st = STEPS[n];
   $('popStep').textContent = `Step ${n} of 4`;
   $('popTitle').textContent = st.title;
-  $('popText').textContent = st.text;
+  $('popText').textContent = why || st.text;
+  $('popText').classList.toggle('pop-warn', Boolean(why));
   $('popActions').innerHTML = st.actions() + (n < 4 ? `<button type="button" class="pop-next" data-next-step="${n + 1}">Next: ${STEPS[n + 1].title} →</button>` : '');
   $('pop').style.setProperty('--x', `${(n - 1) * 25 + 12.5}%`);
   if (n === 1) $('popUser').focus();
@@ -142,7 +154,6 @@ addEventListener('pointerdown', (e) => {
   // dragging the model or using the camera pad counts as finding your angle
   if (e.target.closest('#app canvas, .studio-pad')) markStep(3);
 });
-if (state.user) markStep(1);
 
 // ---------- camera pad + preview ----------
 // Preview hides every panel so only the model is left; "Show controls" brings them back.
@@ -152,13 +163,17 @@ previewBtn.className = 'vp-preview';
 previewBtn.title = 'Preview: hide the controls';
 previewBtn.innerHTML =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span>Preview</span>';
-createViewPad(document.body, map, { extra: previewBtn, className: 'studio-pad' });
+const pad = createViewPad(document.body, map, { extra: previewBtn, className: 'studio-pad', onTour: (tour) => update({ tour }) });
 function setPreview(on) {
   document.body.classList.toggle('preview', on);
   $('exitPreview').hidden = !on;
   if (on) setDrawer(false);
 }
 previewBtn.addEventListener('click', () => setPreview(true));
+$('previewTop').addEventListener('click', () => {
+  showStep(0);
+  setPreview(true);
+});
 $('exitPreview').addEventListener('click', () => setPreview(false));
 
 // phones: the bottom sheet keeps styles and colors in view, the rest folds under "More"
@@ -180,6 +195,7 @@ function update(patch) {
   syncInputs();
   syncUrl();
   renderCode();
+  if ('tour' in patch) pad?.syncTour();
 }
 
 function syncUrl() {
@@ -272,7 +288,12 @@ map.on('loading', ({ user, year }) => {
   player?.pause();
   setStatus(user ? `Loading ${user}'s ${year} contributions…` : '');
 });
-map.on('error', (err) => setStatus(err.message, true));
+map.on('error', (err) => {
+  setStatus(err.message, true);
+  done.clear(); // that username didn't load: back to step 1
+  syncGuide();
+  showStep(1, `${err.message} Check the spelling and try again.`);
+});
 map.on('building', () => setStatus('Growing your forest…'));
 map.on('built', () => setStatus(HOW_TO));
 map.on('load', ({ user, year, days }) => {
@@ -327,6 +348,8 @@ $('songSeek').addEventListener('input', (e) => {
   map.highlight(Number(e.target.value));
 });
 $('downloadSong').addEventListener('click', async () => {
+  if (!hasYear()) return showStep(1, NEED_YEAR);
+  if (!owns('song')) return openPaywall('song');
   if (!player) return;
   const btn = $('downloadSong');
   btn.disabled = true;
@@ -355,6 +378,8 @@ $('form').addEventListener('submit', (e) => {
 // ---------- buttons ----------
 $('resetView').addEventListener('click', () => map.viewFrom('home'));
 $('exportStl').addEventListener('click', () => {
+  if (!hasYear()) return showStep(1, NEED_YEAR);
+  if (STYLES[state.style].pro && !owns(state.style)) return openPaywall(state.style);
   const blob = map.exportSTL();
   if (!blob) return;
   const a = document.createElement('a');
@@ -368,6 +393,8 @@ $('clearCamera').addEventListener('click', () => update({ camera: null }));
 
 // ---------- drawer ----------
 function setDrawer(open) {
+  if (open && !hasYear()) return showStep(1, NEED_YEAR); // no sharing a sample year
+  if (open && STYLES[state.style].pro && !owns(state.style)) return openPaywall(state.style);
   if (open) {
     markStep(4);
     takeShot();
@@ -556,3 +583,60 @@ syncUrl();
 syncGuide();
 setTab('website');
 suggestDesktop();
+
+// ---------- the paywall ----------
+// Shown at the moment a Pro world is about to leave the Studio (share, STL, song), never
+// before: you can look at every world for free. Prices are framed per day, a single world
+// can be bought on its own, and the yearly plan is picked by default as the best value.
+const PLANS = {
+  world: (name) => `$1.99 one time. ${name} stays yours, with embeds, README pictures and STL.`,
+  year: () => '$29 billed once a year. That’s $2.42 a month, 40% less than monthly.',
+  month: () => '$4 billed every month. Cancel anytime.',
+  life: () => '$49 once. No subscription, ever, and every world we add.',
+};
+let payItem = '';
+let payPlan = 'year';
+function openPaywall(item) {
+  payItem = item;
+  const name = item === 'song' ? 'your song' : STYLES[item].name;
+  $('payTitle').textContent = item === 'song' ? 'Keep your song' : `Keep your ${name}`;
+  $('payLead').textContent =
+    item === 'song'
+      ? 'Your year, as music. Unlock it to download the song.'
+      : `You made it. Unlock ${name} to share it, embed it on your site and README, and print it.`;
+  $('payWorldName').textContent = item === 'song' ? 'Just the song' : `Just ${name}`;
+  $('payReady').textContent = item === 'song' ? '♪ Your song is ready' : `Your ${name} is ready`;
+  try {
+    $('payShot').src = map.snapshot('image/jpeg', 0.85);
+  } catch {}
+  setPayPlan(payPlan);
+  const who = currentAccount();
+  $('googleBtn').lastChild.textContent = who ? ` Continue as ${who.name?.split(' ')[0] || who.email}` : ' Continue with Google';
+  $('payNote').textContent = 'Cancel anytime. Your City stays free forever.';
+  $('payNote').classList.remove('pay-warn');
+  $('paywall').showModal();
+}
+function setPayPlan(plan) {
+  payPlan = plan;
+  for (const b of $('payPlans').children) b.setAttribute('aria-checked', b.dataset.plan === plan);
+  $('payBilled').textContent = PLANS[plan](payItem === 'song' ? 'Your song' : STYLES[payItem]?.name ?? '');
+}
+$('payPlans').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-plan]');
+  if (b) setPayPlan(b.dataset.plan);
+});
+$('payClose').addEventListener('click', () => $('paywall').close());
+$('paywall').addEventListener('click', (e) => e.target === $('paywall') && $('paywall').close());
+$('googleBtn').addEventListener('click', async () => {
+  const note = $('payNote');
+  try {
+    if (!currentAccount()) await signInWithGoogle();
+    // signed in: the next stop is checkout, which isn't connected yet
+    note.textContent = 'You’re signed in. Secure checkout opens very soon; we’ll keep your choice for when it does.';
+    note.classList.add('pay-warn');
+  } catch (err) {
+    note.textContent = err.message === 'setup' ? 'Google sign-in and checkout are being connected and open very soon. Until then you can try every world here for free.' : err.message;
+    note.classList.add('pay-warn');
+  }
+});
+if (!signInAvailable()) $('googleBtn').title = 'Opening soon';
