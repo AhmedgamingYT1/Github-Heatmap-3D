@@ -364,6 +364,13 @@ export function createHeatmap(container, initialOptions = {}) {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   let pointerInside = false;
+  let lastMove = 0;
+  let dragging = false;
+  controls.addEventListener('start', () => (dragging = true));
+  controls.addEventListener('end', () => {
+    dragging = false;
+    lastMove = performance.now();
+  });
   let pointerPx = { x: 0, y: 0 };
 
   const onPointerMove = (e) => {
@@ -371,6 +378,7 @@ export function createHeatmap(container, initialOptions = {}) {
     pointerPx = { x: e.clientX - r.left, y: e.clientY - r.top };
     pointer.set((pointerPx.x / r.width) * 2 - 1, -(pointerPx.y / r.height) * 2 + 1);
     pointerInside = true;
+    lastMove = performance.now();
   };
   const onPointerLeave = () => {
     pointerInside = false;
@@ -420,16 +428,20 @@ export function createHeatmap(container, initialOptions = {}) {
     showTip(tour.day, ((projected.x + 1) / 2) * size.w, ((1 - projected.y) / 2) * size.h);
   }
 
+  // A pointer resting over the model (often the case: views fill the screen) doesn't stop
+  // the walk-through. Only pointing at a day, dragging, or moving within the last moment does.
+  const IDLE = 1200;
   function updateHover(now) {
     if (!style || !opts.tooltip) return hideTip();
+    if (dragging) return hideTip();
     if (!pointerInside) return stepTour(now);
     raycaster.setFromCamera(pointer, camera);
     const i = style.pick(raycaster);
-    setHovered(i);
     if (i < 0) {
-      tooltip.classList.remove('on');
-      return;
+      if (now - lastMove > IDLE) return stepTour(now);
+      return hideTip();
     }
+    setHovered(i);
     tour.day = i; // the walk-through continues from the last day looked at
     showTip(i, pointerPx.x, pointerPx.y);
   }
