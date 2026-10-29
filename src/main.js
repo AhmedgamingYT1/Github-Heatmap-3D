@@ -1,7 +1,11 @@
 // The main site: an editor around the 3D heatmap that produces embed code.
+import { inject } from '@vercel/analytics';
 import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 import '@fontsource-variable/doto';
+
+// Initialize Vercel Analytics
+inject();
 import { createHeatmap, fmtDate } from './lib/heatmap.js';
 import { computeStats } from './lib/data.js';
 import { THEMES, getTheme, applyThemeToPage } from './lib/themes.js';

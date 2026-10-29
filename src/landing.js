@@ -1,9 +1,13 @@
 // Landing page: one live 3D hero, expanding style cards that open a live viewer,
 // a bento of features and pricing. Only one 3D view renders at a time, and only while visible.
+import { inject } from '@vercel/analytics';
 import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 import '@fontsource-variable/doto';
 import './landing.css';
+
+// Initialize Vercel Analytics
+inject();
 import { createHeatmap } from './lib/heatmap.js';
 import { demoContributions } from './lib/data.js';
 import { THEMES } from './lib/themes.js';

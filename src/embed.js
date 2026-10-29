@@ -1,5 +1,9 @@
 // Bare 3D heatmap for iframes: /embed.html?user=octocat&theme=ocean
+import { inject } from '@vercel/analytics';
 import { createHeatmap } from './lib/heatmap.js';
+
+// Initialize Vercel Analytics
+inject();
 import { THEMES, getTheme } from './lib/themes.js';
 import { OPTIONS, parseOptions, toParams } from './lib/options.js';
 import { STYLES, getStyle } from './lib/styles/index.js';
